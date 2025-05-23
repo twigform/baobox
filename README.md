@@ -11,7 +11,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/twigform/baobox">
-    <img src="https://github.com/user-attachments/assets/7037f4bf-d82e-4c77-b7c1-50e98b503655" alt="Logo" width="80" height="80">
+    <img src="assets/LogoPng.png" alt="Logo" width="200" height="auto">
   </a>
 
 <h3 align="center">BaoBox</h3>
