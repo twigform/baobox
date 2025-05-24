@@ -163,7 +163,7 @@
     border-radius: 4px;
   }
 
-    .window-controls {
+  .window-controls {
     display: flex;
     gap: 8px;
     align-items: center;
@@ -174,38 +174,28 @@
     height: 32px;
     border: none;
     border-radius: 6px;
-    background: var(--surface0);
+    background: var(--base);
+    border: 2px solid var(--surface1);
     color: var(--text);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
     position: relative;
+    transition: 
+      background 0.3s ease,
+      transform 0.15s ease,
+      box-shadow 0.3s ease,
+      color 0.3s ease;
   }
 
   .control-btn:hover {
-    background: var(--surface1);
-    transform: translateY(-1px);
+    background: var(--mantle);
+    transform: translateY(-2px) scale(1.05);
   }
 
   .control-btn:active {
-    transform: translateY(0);
-  }
-
-  .control-btn.minimize:hover {
-    background: #f9e2af;
-    color: #2c3e50;
-  }
-
-  .control-btn.maximize:hover {
-    background: #a6e3a1;
-    color: #2c3e50;
-  }
-
-  .control-btn.close:hover {
-    background: #f38ba8;
-    color: #2c3e50;
+    transform: translateY(0) scale(0.97);
   }
 
   @keyframes fadeIn {
