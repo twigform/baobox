@@ -355,13 +355,13 @@
 
 /* Column */
 .column {
-    background: var(--base);
+    background: var(--surface0);
     border-radius: 15px;
     min-width: 300px;
     width: 300px;
     min-height: 400px;
     padding: 16px;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, transform 0.2s ease-out;
     display: flex;
     flex-direction: column;
 }
@@ -397,13 +397,14 @@
     background: var(--accent-blue);
     transform: translateY(2px);
 }
-/* Drag over state */
+
 .column.drag-over {
-    background: var(--mantle);
+    background: var(--surface0);
     box-shadow: 0 0 0 2px var(--accent-blue);
+    transform: scale(1.01);
 }
 
-/* Tasks container */
+
 .tasks {
     display: flex;
     flex-direction: column;
@@ -426,9 +427,9 @@
     border-radius: 3px;
 }
 
-/* Task card */
+
 .task {
-    background: var(--surface0);
+    background: var(--base);
     border: solid 2px var(--surface1);
     border-radius: 10px;
     padding: 12px;
@@ -451,7 +452,7 @@
     transform: scale(0.98);
 }
 
-/* Typography */
+
 h2 {
     margin: 0;
     font-size: 1.2rem;
@@ -471,9 +472,9 @@ p {
     color: var(--overlay);
 }
 
-/* Add task form */
+
 .add-task-form {
-    background: var(--surface0);
+    background: var(--base);
     border: solid 2px var(--surface1);
     border-radius: 10px;
     padding: 12px;
@@ -491,7 +492,7 @@ p {
     border: 2px solid var(--surface1);
     border-radius: 10px;
     font-size: 0.9rem;
-    background: var(--base);
+    background: var(--surface0);
     color: var(--text);
     outline: none;
     box-sizing: border-box;
@@ -509,7 +510,6 @@ p {
     opacity: 0.8;
 }
 
-/* Form actions */
 .form-actions {
     display: flex;
     justify-content: flex-end;
@@ -587,13 +587,13 @@ p {
     transform: scale(0.95);
 }
 
-/* Ghost task */
+
 :global(.task-ghost) {
     position: fixed;
     border: solid 2px var(--surface1);
     pointer-events: none;
     z-index: 1000;
-    background: var(--surface0);
+    background: var(--base);
     border-radius: 10px;
     padding: 12px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
@@ -623,7 +623,7 @@ p {
     color: var(--subtext);
 }
 
-/* Context menu item */
+
 .context-menu-item {
     animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
     padding: 8px 12px;

@@ -5,7 +5,6 @@
   import { getCurrentWindow } from '@tauri-apps/api/window';
 
 
-  // Set CSS variables for the theme
   const theme = catppuccinMocha;
   document.documentElement.style.setProperty('--base', theme.base);
   document.documentElement.style.setProperty('--mantle', theme.mantle);
@@ -106,7 +105,7 @@
     --surface1: #45475a;
     --overlay: #6c7086;
     font-family: Source Code Pro, monospace;
-    background-color: #11111b;
+    background-color: #181825;
   }
 
   
@@ -115,7 +114,7 @@
     padding: 15px;
     height: calc(100vh - 2vh);
     box-sizing: border-box;
-    background: var(--base);
+    background: var(--mantle);
     color: var(--text);
     display: flex;
     flex-direction: column;
@@ -144,7 +143,7 @@
     gap: 16px;
     height: calc(100% - 60px);
     overflow-x: auto;
-    background: var(--surface0);
+    background: var(--base);
     border-radius: 8px;
     padding: 16px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
