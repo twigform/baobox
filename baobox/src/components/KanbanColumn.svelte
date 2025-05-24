@@ -45,13 +45,11 @@
 
     
 
-    // Context menu state
     let showContextMenu = false;
     let contextMenuX = 0;
     let contextMenuY = 0;
     let selectedTask: Task | null = null;
 
-    // Reset form function
     function resetForm() {
         newTaskTitle = '';
         newTaskDescription = '';
@@ -75,7 +73,6 @@
     }
 
     function createGhostElement(task: Task, x: number, y: number) {
-        // Remove existing ghost if any
         if (ghostElement) {
             ghostElement.remove();
         }
@@ -88,7 +85,6 @@
         `;
         document.body.appendChild(ghostElement);
 
-        // Position the ghost element where the original task is
         ghostElement.style.opacity = '0';
         ghostElement.style.position = 'fixed';
         ghostElement.style.left = `${x}px`;
@@ -96,7 +92,6 @@
         ghostElement.style.width = '280px';
         ghostElement.style.pointerEvents = 'none';
         
-        // Trigger animation
         requestAnimationFrame(() => {
             if (ghostElement) {
                 ghostElement.style.opacity = '0.9';
@@ -119,7 +114,6 @@
             y: event.clientY - rect.top
         };
 
-        // Create ghost element
         createGhostElement(task, event.clientX - mouseOffset.x, event.clientY - mouseOffset.y);
 
         draggedTask.set({
@@ -127,15 +121,12 @@
             mouseOffset
         });
 
-        // Create handlers
         mouseUpHandler = (e: MouseEvent) => stopDragging(e);
         mouseMoveHandler = (e: MouseEvent) => handleDragMove(e);
 
-        // Add global event listeners
         window.addEventListener('mouseup', mouseUpHandler);
         window.addEventListener('mousemove', mouseMoveHandler);
 
-        // Add visual feedback
         taskElement.style.opacity = '0.5';
     }
 
@@ -143,7 +134,6 @@
         const dragged = get(draggedTask);
         if (!dragged.task || !ghostElement) return;
 
-        // Use requestAnimationFrame for smooth movement
         requestAnimationFrame(() => {
             if (ghostElement) {
                 // Move ghost element
@@ -152,7 +142,6 @@
             }
         });
 
-        // Find column under cursor
         const columns = document.querySelectorAll('.column');
         let foundColumn = false;
         
@@ -185,12 +174,10 @@
             moveTask(dragged.task.id, dragged.task.status, overColumn);
         }
 
-        // Animate ghost element away
         if (ghostElement) {
             ghostElement.style.opacity = '0';
             ghostElement.style.transform = 'rotate(0deg) scale(0.95)';
             
-            // Remove ghost element after animation
             setTimeout(() => {
                 if (ghostElement) {
                     ghostElement.remove();

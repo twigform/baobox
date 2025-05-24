@@ -69,23 +69,24 @@
       <h1>BaoBox Board</h1>
       <div class="window-controls">
         <button class="control-btn minimize" on:click|stopPropagation={minimizeWindow} title="Minimize">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <rect x="2" y="5" width="8" height="2" fill="currentColor"/>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
+            <path fill-rule="evenodd" d="M4 10a.75.75 0 01.75-.75h10.5a.75.75 0 010 1.5H4.75A.75.75 0 014 10z" clip-rule="evenodd" />
           </svg>
         </button>
         <button class="control-btn maximize" on:click|stopPropagation={maximizeWindow} title="Maximize">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <rect x="2" y="2" width="8" height="8" stroke="currentColor" stroke-width="1.5" fill="none"/>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
+            <path fill-rule="evenodd" d="M5.25 4A1.25 1.25 0 004 5.25v9.5A1.25 1.25 0 005.25 16h9.5A1.25 1.25 0 0016 14.75v-9.5A1.25 1.25 0 0014.75 4h-9.5zM5.5 5.5h9v9h-9v-9z" clip-rule="evenodd" />
           </svg>
         </button>
         <button class="control-btn close" on:click|stopPropagation={closeWindow} title="Close">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M2.5 2.5L9.5 9.5M9.5 2.5L2.5 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
+            <path fill-rule="evenodd" d="M4.22 4.22a.75.75 0 011.06 0L10 8.94l4.72-4.72a.75.75 0 111.06 1.06L11.06 10l4.72 4.72a.75.75 0 01-1.06 1.06L10 11.06l-4.72 4.72a.75.75 0 01-1.06-1.06L8.94 10 4.22 5.28a.75.75 0 010-1.06z" clip-rule="evenodd" />
           </svg>
         </button>
       </div>
     </div>
   </header>
+
 
   <div class="board">
     {#each $columns as column (column.id)}
@@ -111,7 +112,7 @@
   
 
   main {
-    padding: 24px;
+    padding: 15px;
     height: calc(100vh - 2vh);
     box-sizing: border-box;
     background: var(--base);
@@ -123,7 +124,7 @@
   }
 
   header {
-    margin-bottom: 24px;
+    margin-bottom: 15px;
     animation: slideDown 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
   }
   .header-content {
@@ -135,7 +136,7 @@
     margin: 0;
     color: var(--lavender);
     font-size: 28px;
-    font-weight: 700;
+    font-weight: 600;
   }
 
   .board {
@@ -175,7 +176,6 @@
     border: none;
     border-radius: 6px;
     background: var(--base);
-    border: 2px solid var(--surface1);
     color: var(--text);
     cursor: pointer;
     display: flex;
@@ -185,7 +185,6 @@
     transition: 
       background 0.3s ease,
       transform 0.15s ease,
-      box-shadow 0.3s ease,
       color 0.3s ease;
   }
 
