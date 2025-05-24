@@ -5,8 +5,10 @@
     import { onMount, onDestroy } from 'svelte';
     import { get } from 'svelte/store';
     import ContextMenu from './ContextMenu.svelte';
+    import { flip } from 'svelte/animate';
     import { catppuccinMocha } from '$lib/theme';
     import { fade } from 'svelte/transition';
+    import { bounceOut, cubicInOut, cubicOut, quintOut, backOut } from 'svelte/easing';
     import { slide } from 'svelte/transition';
 
     export let column: Column;
@@ -229,7 +231,7 @@
     </div>
 
     {#if showAddTask}
-        <div class="add-task-form" transition:slide>
+        <div class="add-task-form" transition:slide={{ duration: 400, easing: backOut }}>
             <input
                 type="text"
                 placeholder="Task title"
@@ -269,7 +271,9 @@
                 on:contextmenu={(e) => handleContextMenu(e, task)}
                 role="button"
                 tabindex="0"
-                transition:fade={{ duration: 200 }}
+                animate:flip={{ duration: 300, easing: cubicOut }}
+                out:fade={{ duration: 300 }}
+                in:slide={{ duration: 400, easing: backOut }}
                 on:outroend={() => onOutroEnd(task.id)}
             >
                 <h3>{task.title}</h3>
