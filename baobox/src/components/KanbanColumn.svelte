@@ -11,6 +11,8 @@
 
     export let column: Column;
 
+    let deletingTasks = new Set<number>();
+
     let columnElement: HTMLDivElement;
     let mouseUpHandler: (e: MouseEvent) => void;
     let mouseMoveHandler: (e: MouseEvent) => void;
@@ -37,6 +39,15 @@
             addTask(column.status, newTaskTitle.trim(), newTaskDescription.trim());
             resetForm();
         }
+    }
+
+    function handleDeleteTaskAnimated(task: Task) {
+        deletingTasks.add(task.id);
+    }
+
+    function onOutroEnd(taskId: number) {
+        deleteTask(taskId, column.status);
+        deletingTasks.delete(taskId);
     }
 
     function createGhostElement(task: Task, x: number, y: number) {
@@ -258,6 +269,8 @@
                 on:contextmenu={(e) => handleContextMenu(e, task)}
                 role="button"
                 tabindex="0"
+                transition:fade={{ duration: 200 }}
+                on:outroend={() => onOutroEnd(task.id)}
             >
                 <h3>{task.title}</h3>
                 {#if task.description}
@@ -454,7 +467,7 @@ p {
     width: 100%;
     padding: 8px;
     margin-bottom: 8px;
-    border: 2px solid var(--mantle);
+    border: 2px solid var(--surface1);
     border-radius: 10px;
     font-size: 0.9rem;
     background: var(--base);
