@@ -422,12 +422,18 @@
     padding: 12px;
     cursor: grab;
     user-select: none;
+    text-wrap: pretty;
+    hyphens: auto;
+    word-break: break-word;
+
+    height: fit-content;
     transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 
 .task.being-dragged {
     opacity: 0.5;
     transform: scale(0.95);
+
 }
 
 .task:hover {
