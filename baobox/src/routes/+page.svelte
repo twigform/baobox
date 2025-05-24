@@ -41,9 +41,11 @@
     background-color: #11111b;
   }
 
+  
+
   main {
     padding: 24px;
-    height: 100vh;
+    height: calc(100vh - 2vh);
     box-sizing: border-box;
     background: var(--base);
     color: var(--text);

@@ -49,12 +49,14 @@
 .context-menu {
     position: fixed;
     background: var(--surface0);
-    border-radius: 4px;
+    border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-    padding: 4px 0;
+    padding: 10px;
     min-width: 160px;
     z-index: 1000;
     display: none;
+    border: solid 2px var(--surface1);
+    animation: popIn 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55);
 }
 
 .context-menu.show {
@@ -78,6 +80,17 @@
 
 :global(.context-menu-item.delete) {
     color: var(--accent-red);
+}
+
+@keyframes popIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 </style>

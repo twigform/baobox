@@ -6,6 +6,7 @@
     import { get } from 'svelte/store';
     import ContextMenu from './ContextMenu.svelte';
     import { catppuccinMocha } from '$lib/theme';
+    import { fade } from 'svelte/transition';
     import { slide } from 'svelte/transition';
 
     export let column: Column;
@@ -255,11 +256,34 @@
                 class:being-dragged={$draggedTask.task?.id === task.id}
                 on:mousedown={(e) => startDragging(e, task)}
                 on:contextmenu={(e) => handleContextMenu(e, task)}
+                role="button"
+                tabindex="0"
             >
                 <h3>{task.title}</h3>
                 {#if task.description}
                     <p>{task.description}</p>
                 {/if}
+                <button
+                    class="done-button"
+                    aria-label="Mark task done"
+                    on:click|stopPropagation={() => deleteTask(task.id, task.status)}
+                    on:mousedown|stopPropagation
+                    tabindex="0"
+                    title="Done"
+                >
+                    <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--accent-green)"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    >
+                    <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                </button>
             </div>
         {/each}
     </div>
@@ -280,6 +304,7 @@
 </ContextMenu>
 
 <style>
+
 :root {
     --base: #1e1e2e;
     --mantle: #181825;
@@ -302,7 +327,7 @@
 /* Column */
 .column {
     background: var(--base);
-    border-radius: 8px;
+    border-radius: 15px;
     min-width: 300px;
     width: 300px;
     min-height: 400px;
@@ -325,19 +350,24 @@
     background: var(--lavender);
     color: var(--crust);
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     width: 28px;
     height: 28px;
     font-size: 20px;
     line-height: 1;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, transform 0.2s ease-out;
 }
 
 .add-button:hover {
     background: var(--accent-blue);
+    transform: scale(1.05);
 }
 
+.add-button:active {
+    background: var(--accent-blue);
+    transform: translateY(2px);
+}
 /* Drag over state */
 .column.drag-over {
     background: var(--mantle);
@@ -370,9 +400,9 @@
 /* Task card */
 .task {
     background: var(--surface0);
-    border-radius: 4px;
+    border: solid 2px var(--surface1);
+    border-radius: 10px;
     padding: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     cursor: grab;
     user-select: none;
     transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
@@ -380,11 +410,11 @@
 
 .task.being-dragged {
     opacity: 0.5;
-    transform: scale(0.98);
+    transform: scale(0.95);
 }
 
 .task:hover {
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    transform: scale(0.98);
 }
 
 /* Typography */
@@ -409,11 +439,14 @@ p {
 
 /* Add task form */
 .add-task-form {
-    background: var(--surface1);
-    border-radius: 4px;
+    background: var(--surface0);
+    border: solid 2px var(--surface1);
+    border-radius: 10px;
     padding: 12px;
-    margin-bottom: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    color: var(--text);
+    margin-bottom: 8px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .add-task-form input,
@@ -421,17 +454,25 @@ p {
     width: 100%;
     padding: 8px;
     margin-bottom: 8px;
-    border: 1px solid var(--mantle);
-    border-radius: 4px;
+    border: 2px solid var(--mantle);
+    border-radius: 10px;
     font-size: 0.9rem;
     background: var(--base);
     color: var(--text);
+    outline: none;
     box-sizing: border-box;
+    font-family: inherit;
 }
 
 .add-task-form textarea {
     resize: vertical;
     min-height: 60px;
+}
+
+.add-task-form input::placeholder,
+.add-task-form textarea::placeholder {
+    color: var(--text);
+    opacity: 0.8;
 }
 
 /* Form actions */
@@ -443,37 +484,83 @@ p {
 
 .form-actions button {
     padding: 6px 12px;
-    border-radius: 4px;
+    border-radius: 8px;
     border: none;
     cursor: pointer;
     font-size: 0.9rem;
+    transition: all 0.2s ease;
 }
 
 .form-actions .add {
-    background: var(--accent-green);
-    color: var(--crust);
+    background: var(--surface0);
+    border: 2px solid var(--accent-green);
+    color: var(--text);
 }
 
 .form-actions .add:hover {
-    background: var(--accent-mauve);
+    background: var(--surface1);
+    transform: scale(1.05);
+}
+
+.done-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.task:hover .done-button {
+  opacity: 1;
+}
+
+.done-button:hover svg {
+    transform: scale(1.1);
+    transition: all 0.2s ease;
+}
+
+
+.done-button:active svg {
+    transform: scale(0.95);
+}
+
+.form-actions .add:active {
+    background: var(--surface1);
+    transform: scale(0.95);
 }
 
 .form-actions .cancel {
     background: var(--surface0);
+    border: 2px solid var(--accent-red);
     color: var(--text);
 }
 
 .form-actions .cancel:hover {
     background: var(--surface1);
+    transform: scale(1.05);
+}
+
+.form-actions .cancel:active {
+    background: var(--surface1);
+    transform: scale(0.95);
 }
 
 /* Ghost task */
 :global(.task-ghost) {
     position: fixed;
+    border: solid 2px var(--surface1);
     pointer-events: none;
     z-index: 1000;
     background: var(--surface0);
-    border-radius: 4px;
+    border-radius: 10px;
     padding: 12px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
     width: 280px;
@@ -482,31 +569,37 @@ p {
     cursor: grabbing;
     transition: transform 0.1s ease, left 0.15s ease-out, top 0.15s ease-out;
     will-change: transform, left, top;
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(10px);
 }
 
 :global(.task-ghost h3) {
     margin: 0 0 8px 0;
     font-size: 1rem;
+    cursor: grabbing;
     color: var(--text);
 }
 
 :global(.task-ghost p) {
     margin: 0;
+    cursor: grabbing;
     font-size: 0.9rem;
     color: var(--subtext);
 }
 
 /* Context menu item */
 .context-menu-item {
+    animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
     padding: 8px 12px;
     cursor: pointer;
+    border-radius: 8px;
     font-size: 0.9rem;
     color: var(--text);
     transition: background 0.2s ease;
+    transition: transform 0.1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     background: transparent;
     border: none;
     width: 100%;
+    font-family: inherit;
     text-align: left;
 }
 
@@ -516,12 +609,14 @@ p {
 
 .context-menu-item.delete {
     color: var(--accent-red);
+    border: solid 2px var(--accent-red);
+}
+.context-menu-item.delete:hover {
+    background: var(--surface1);
 }
 
-/* Kanban animation */
-.kanban-column {
-    animation: fadeIn 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-    box-sizing: border-box;
+.context-menu-item.delete:active {
+    transform: scale(0.95);
 }
 
 @keyframes fadeIn {
