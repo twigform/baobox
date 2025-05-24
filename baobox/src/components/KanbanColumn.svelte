@@ -14,6 +14,8 @@
     export let column: Column;
 
     let deletingTasks = new Set<number>();
+    let titleInput: HTMLInputElement | null = null;
+    let descInput: HTMLTextAreaElement | null = null;
 
     let columnElement: HTMLDivElement;
     let mouseUpHandler: (e: MouseEvent) => void;
@@ -22,6 +24,26 @@
     let showAddTask = false;
     let newTaskTitle = '';
     let newTaskDescription = '';
+
+    onMount(() => {
+        const handleKeydown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 't' && column.status === 'todo') {
+                e.preventDefault();
+                showAddTask = true;
+
+                setTimeout(() => {
+                    titleInput?.focus();
+                }, 0);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeydown);
+        return () => {
+            window.removeEventListener('keydown', handleKeydown);
+        };
+    });
+
+    
 
     // Context menu state
     let showContextMenu = false;
@@ -236,21 +258,24 @@
                 type="text"
                 placeholder="Task title"
                 bind:value={newTaskTitle}
+                bind:this={titleInput}
                 on:keydown={(e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddTask();
-                    } else if (e.key === 'Escape') {
-                        resetForm();
+                    if (e.key === "Enter") {
+                    e.preventDefault();
+                    descInput.focus();
                     }
                 }}
             />
             <textarea
                 placeholder="Task description (optional)"
                 bind:value={newTaskDescription}
+                bind:this={descInput}
                 rows="3"
                 on:keydown={(e) => {
-                    if (e.key === 'Escape') {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddTask(); // submit
+                    } else if (e.key === 'Escape') {
                         resetForm();
                     }
                 }}
