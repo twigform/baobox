@@ -13,7 +13,11 @@
   document.documentElement.style.setProperty('--surface0', theme.surface0);
   document.documentElement.style.setProperty('--surface1', theme.surface1);
   document.documentElement.style.setProperty('--overlay', theme.overlay);
+
+  import * as win from '@tauri-apps/api/window';
+  console.log(win);
 </script>
+
 
 <main>
   <header>

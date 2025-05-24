@@ -12,9 +12,12 @@
   "app": {
     "windows": [
       {
-        "title": "baobox",
+        "title": "BaoBox",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "decorations": false,
+        "center": true,
+        "resizable": true
       }
     ],
     "security": {
