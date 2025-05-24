@@ -425,7 +425,6 @@
     text-wrap: pretty;
     hyphens: auto;
     word-break: break-word;
-
     height: fit-content;
     transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
@@ -587,6 +586,9 @@ p {
     padding: 12px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
     width: 280px;
+    text-wrap: pretty;
+    hyphens: auto;
+    word-break: break-word;
     opacity: 0.9;
     transform: rotate(2deg) scale(1.02);
     cursor: grabbing;
