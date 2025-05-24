@@ -63,6 +63,7 @@
 
 
 <main>
+  <!-- svelte-ignore a11y-no-static-element-interactions -->
   <header on:mousedown={dragWindow}>
     <div class="header-content">
       <h1>BaoBox Board</h1>
@@ -174,7 +175,7 @@
     height: 32px;
     border: none;
     border-radius: 6px;
-    background: var(--base);
+    background: var(--mantle);
     color: var(--text);
     cursor: pointer;
     display: flex;
@@ -188,7 +189,7 @@
   }
 
   .control-btn:hover {
-    background: var(--mantle);
+    background: var(--base);
     transform: translateY(-2px) scale(1.05);
   }
 
