@@ -118,13 +118,13 @@
     color: var(--text);
     display: flex;
     flex-direction: column;
-    animation: fadeIn 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    animation: fadeIn 1s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 10px;
   }
 
   header {
     margin-bottom: 15px;
-    animation: slideDown 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    animation: slideDown 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .header-content {
@@ -138,6 +138,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    animation: slideRight 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .app-icon {
@@ -170,7 +171,7 @@
     border-radius: 8px;
     padding: 16px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    animation: slideIn 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    animation: slideIn 1s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .board::-webkit-scrollbar {
@@ -190,6 +191,7 @@
     display: flex;
     gap: 8px;
     align-items: center;
+    animation: slideLeft 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .control-btn {
@@ -205,41 +207,78 @@
     justify-content: center;
     position: relative;
     transition: 
-      background 0.3s ease,
-      transform 0.15s ease,
-      color 0.3s ease;
+      background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+      color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .control-btn:hover {
     background: var(--base);
-    transform: translateY(-2px) scale(1.05);
+    transform: translateY(-3px) scale(1.08);
   }
 
   .control-btn:active {
-    transform: translateY(0) scale(0.97);
+    transform: translateY(1px) scale(0.95);
   }
 
   .control-btn.settings:hover svg {
-    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-    transform: rotate(120deg);
+    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform: rotate(180deg);
   }
 
   @keyframes fadeIn {
     from {
       opacity: 0;
+      filter: blur(5px);
     }
     to {
       opacity: 1;
+      filter: blur(0);
     }
   }
 
   @keyframes slideDown {
     from {
-      transform: translateY(-20px);
+      transform: translateY(-30px);
       opacity: 0;
     }
     to {
       transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(-30px);
+      opacity: 0;
+      filter: blur(5px);
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+      filter: blur(0);
+    }
+  }
+
+  @keyframes slideRight {
+    from {
+      transform: translateX(-30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideLeft {
+    from {
+      transform: translateX(30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
       opacity: 1;
     }
   }

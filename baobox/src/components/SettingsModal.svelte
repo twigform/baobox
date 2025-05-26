@@ -137,7 +137,7 @@
         justify-content: center;
         align-items: center;
         z-index: 1000;
-        animation: fadeIn 0.2s ease;
+        animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .modal-content {
@@ -149,7 +149,9 @@
         max-height: 90vh;
         overflow-y: auto;
         color: var(--text);
-        animation: slideIn 0.3s ease;
+        animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        transform-origin: center center;
     }
 
     .modal-header {
@@ -175,11 +177,16 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: background-color 0.2s ease;
+        transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     .close-btn:hover {
         background: var(--surface1);
+        transform: translateY(-2px);
+    }
+
+    .close-btn:active {
+        transform: translateY(2px) scale(0.95);
     }
 
     .tabs {
@@ -201,7 +208,8 @@
         cursor: pointer;
         border-radius: 6px;
         font-size: 0.95rem;
-        transition: all 0.2s ease;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        transform-origin: center;
     }
 
     .tab-button svg {
@@ -211,11 +219,11 @@
 
     .tab-button:hover {
         background: var(--surface1);
+        transform: translateY(-2px);
     }
 
-    .tab-button:hover svg {
-        opacity: 1;
-        transform: scale(1.1);
+    .tab-button:active {
+        transform: translateY(0) scale(0.95);
     }
 
     .tab-button.active {
@@ -264,17 +272,23 @@
         flex-direction: column;
         align-items: center;
         gap: 8px;
-        transition: all 0.2s ease;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        transform-origin: center;
     }
 
     .theme-btn:hover {
         background: var(--surface2);
-        transform: translateY(-2px);
+        transform: translateY(-3px) scale(1.02);
+    }
+
+    .theme-btn:active {
+        transform: translateY(0) scale(0.98);
     }
 
     .theme-btn.active {
         border-color: var(--blue);
         background: var(--surface2);
+        transform: translateY(-2px);
     }
 
     .theme-preview {
@@ -337,7 +351,7 @@
         background: var(--surface1);
         border: 2px solid var(--surface2);
         cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.2s ease;
         padding: 0;
     }
 
@@ -353,7 +367,7 @@
         height: 16px;
         background: var(--text);
         border-radius: 50%;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .toggle-button.active {
@@ -366,34 +380,39 @@
         background: white;
     }
 
+    .toggle-button:active .toggle-slider {
+        width: 20px;
+    }
+
+    .toggle-button.active:active .toggle-slider {
+        transform: translateX(20px);
+        width: 20px;
+    }
+
     .toggle-button:focus {
         outline: none;
         box-shadow: 0 0 0 2px var(--blue);
     }
 
-    .toggle-button:active .toggle-slider {
-        width: 20px;
-        transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .toggle-button.active:active .toggle-slider {
-        transform: translateX(20px);
-        transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
     @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+        from { 
+            opacity: 0;
+            backdrop-filter: blur(0px);
+        }
+        to { 
+            opacity: 1;
+            backdrop-filter: blur(4px);
+        }
     }
 
     @keyframes slideIn {
         from {
             opacity: 0;
-            transform: translateY(20px);
+            transform: translateY(30px) scale(0.95);
         }
         to {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
         }
     }
 </style>
