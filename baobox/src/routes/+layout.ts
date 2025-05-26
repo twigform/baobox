@@ -6,6 +6,7 @@ export const ssr = false;
 
 import { browser } from '$app/environment';
 import { initUIPreferencesSync } from '$lib/uiPreferencesSync';
+import '../app.css';
 
 // Initialize UI preferences sync when the app loads in the browser
 if (browser) {

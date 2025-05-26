@@ -4,7 +4,16 @@ interface UIPreferences {
     showShadows: boolean;
     showBorders: boolean;
     showRoundedCorners: boolean;
+    fontFamily: string;
 }
+
+const defaultFonts = [
+    { name: 'Inter', value: 'Inter, system-ui, sans-serif' },
+    { name: 'SF Pro Display', value: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif' },
+    { name: 'Source Code Pro', value: '"Source Code Pro", monospace' },
+    { name: 'Roboto', value: 'Roboto, system-ui, sans-serif' },
+    { name: 'System UI', value: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' }
+];
 
 function createUIPreferencesStore() {
     // Get saved preferences from localStorage or use defaults
@@ -18,7 +27,8 @@ function createUIPreferencesStore() {
         return {
             showShadows: true,
             showBorders: true,
-            showRoundedCorners: true
+            showRoundedCorners: true,
+            fontFamily: defaultFonts[0].value // Default to Inter
         };
     };
 
@@ -35,11 +45,21 @@ function createUIPreferencesStore() {
                 return newPrefs;
             });
         },
+        setFont: (fontValue: string) => {
+            update(prefs => {
+                const newPrefs = { ...prefs, fontFamily: fontValue };
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.setItem('baobox-ui-preferences', JSON.stringify(newPrefs));
+                }
+                return newPrefs;
+            });
+        },
         reset: () => {
             const defaults = {
                 showShadows: true,
                 showBorders: true,
-                showRoundedCorners: true
+                showRoundedCorners: true,
+                fontFamily: defaultFonts[0].value
             };
             if (typeof localStorage !== 'undefined') {
                 localStorage.setItem('baobox-ui-preferences', JSON.stringify(defaults));

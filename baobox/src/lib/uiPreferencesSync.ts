@@ -8,5 +8,6 @@ export function initUIPreferencesSync() {
         document.documentElement.dataset.shadows = String(prefs.showShadows);
         document.documentElement.dataset.borders = String(prefs.showBorders);
         document.documentElement.dataset.rounded = String(prefs.showRoundedCorners);
+        document.documentElement.style.setProperty('--font-family', prefs.fontFamily);
     });
 }

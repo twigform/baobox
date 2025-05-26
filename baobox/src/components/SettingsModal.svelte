@@ -4,12 +4,27 @@
     import { fade } from 'svelte/transition';
 
     export let isOpen = false;
-    let activeTab: 'themes' | 'interface' = 'themes';    function handleThemeChange(theme: { name: string; theme: any }) {
+    let activeTab: 'themes' | 'interface' = 'themes';
+
+    const fonts = [
+        { name: 'Inter', value: 'Inter, system-ui, sans-serif' },
+        { name: 'SF Pro Display', value: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif' },
+        { name: 'Source Code Pro', value: '"Source Code Pro", monospace' },
+        { name: 'Roboto', value: 'Roboto, system-ui, sans-serif' },
+        { name: 'System UI', value: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' }
+    ];
+
+    function handleThemeChange(theme: { name: string; theme: any }) {
         currentTheme.setTheme(theme);
     }
 
     function togglePreference(key: 'showShadows' | 'showBorders' | 'showRoundedCorners') {
         uiPreferences.togglePreference(key);
+    }
+
+    function setFont(event: Event) {
+        const select = event.target as HTMLSelectElement;
+        uiPreferences.setFont(select.value);
     }
 
     function closeModal() {
@@ -82,6 +97,19 @@
                 <div class="settings-section">
                     <h3>Interface Options</h3>
                     <div class="interface-options">
+                        <div class="select-wrapper">
+                            <label for="font-select">Font</label>
+                            <select 
+                                id="font-select" 
+                                value={$uiPreferences.fontFamily} 
+                                on:change={setFont}
+                            >
+                                {#each fonts as font}
+                                    <option value={font.value}>{font.name}</option>
+                                {/each}
+                            </select>
+                        </div>
+
                         <label class="toggle-wrapper">
                             <span>Show Shadows</span>
                             <button
@@ -333,6 +361,36 @@
         display: flex;
         flex-direction: column;
         gap: 16px;
+    }
+
+    .select-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .select-wrapper label {
+        color: var(--subtext);
+        font-size: 0.95rem;
+    }    select {
+        background: var(--surface1);
+        border: 2px solid var(--surface2);
+        border-radius: 6px;
+        color: var(--text);
+        padding: 8px 12px;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: inherit;
+    }
+
+    select:hover {
+        background: var(--surface2);
+    }
+
+    select:focus {
+        outline: none;
+        border-color: var(--blue);
     }
 
     .toggle-wrapper {
