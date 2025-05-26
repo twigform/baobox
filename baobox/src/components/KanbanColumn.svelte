@@ -64,7 +64,15 @@
     }
 
     function handleDeleteTaskAnimated(task: Task) {
-        deletingTasks.add(task.id);
+        const taskElement = document.querySelector(`[data-task-id="${task.id}"]`);
+        if (taskElement) {
+            taskElement.style.transform = 'scale(0.9)';
+            taskElement.style.opacity = '0';
+        }
+        
+        setTimeout(() => {
+            deleteTask(task.id, task.status);
+        }, 300); // Match this with your transition duration
     }
 
     function onOutroEnd(taskId: number) {
@@ -283,10 +291,9 @@
                 on:contextmenu={(e) => handleContextMenu(e, task)}
                 role="button"
                 tabindex="0"
-                animate:flip={{ duration: 300, easing: cubicOut }}
+                animate:flip={{ duration: 300 }}
                 out:fade={{ duration: 300 }}
-                in:slide={{ duration: 400, easing: backOut }}
-                on:outroend={() => onOutroEnd(task.id)}
+                data-task-id={task.id}
             >
                 <h3>{task.title}</h3>
                 {#if task.description}
@@ -295,7 +302,7 @@
                 <button
                     class="done-button"
                     aria-label="Mark task done"
-                    on:click|stopPropagation={() => deleteTask(task.id, task.status)}
+                    on:click|stopPropagation={() => handleDeleteTaskAnimated(task)}
                     on:mousedown|stopPropagation
                     tabindex="0"
                     title="Done"
@@ -439,7 +446,8 @@
     hyphens: auto;
     word-break: break-word;
     height: fit-content;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+    position: relative;
 }
 
 .task.being-dragged {
