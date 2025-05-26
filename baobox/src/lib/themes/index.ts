@@ -69,6 +69,75 @@ export const catppuccinMocha = {
     rosewater: '#f5e0dc',
 };
 
+export const gruvbox = {
+    base: '#282828',
+    mantle: '#1d2021',
+    crust: '#1b1b1b',
+    text: '#ebdbb2',
+    subtext: '#a89984',
+    overlay: '#928374',
+    surface0: '#32302f',
+    surface1: '#3c3836',
+    surface2: '#504945',
+    blue: '#83a598',
+    lavender: '#d3869b',
+    sapphire: '#458588',
+    green: '#b8bb26',
+    yellow: '#fabd2f',
+    peach: '#fe8019',
+    red: '#fb4934',
+    maroon: '#cc241d',
+    pink: '#d3869b',
+    flamingo: '#fe8019',
+    rosewater: '#ebdbb2',
+};
+
+export const catppuccinLatte = {
+    base: '#eff1f5',
+    mantle: '#e6e9ef',
+    crust: '#dce0e8',
+    text: '#4c4f69',
+    subtext: '#5c5f77',
+    overlay: '#6c6f85',
+    surface0: '#ccd0da',
+    surface1: '#bcc0cc',
+    surface2: '#acb0be',
+    blue: '#1e66f5',
+    lavender: '#7287fd',
+    sapphire: '#209fb5',
+    green: '#40a02b',
+    yellow: '#df8e1d',
+    peach: '#fe640b',
+    red: '#d20f39',
+    maroon: '#e64553',
+    pink: '#ea76cb',
+    flamingo: '#dd7878',
+    rosewater: '#dc8a78',
+};
+
+export const dracula = {
+    base: '#282a36',
+    mantle: '#1e1f29',
+    crust: '#191a21',
+    text: '#f8f8f2',
+    subtext: '#6272a4',
+    overlay: '#44475a',
+    surface0: '#343746',
+    surface1: '#44475a',
+    surface2: '#4d5066',
+    blue: '#6272a4',
+    lavender: '#bd93f9',
+    sapphire: '#8be9fd',
+    green: '#50fa7b',
+    yellow: '#f1fa8c',
+    peach: '#ffb86c',
+    red: '#ff5555',
+    maroon: '#ff79c6',
+    pink: '#ff79c6',
+    flamingo: '#ffb86c',
+    rosewater: '#ffb86c',
+};
+
 export type Theme = {
     base: string;
     mantle: string;
@@ -101,17 +170,19 @@ export const themes: ThemeOption[] = [
     { name: 'Material Light', theme: materialLight },
     { name: 'Material Dark', theme: materialDark },
     { name: 'Catppuccin Mocha', theme: catppuccinMocha },
+    { name: 'Catppuccin Latte', theme: catppuccinLatte },
+    { name: 'Gruvbox Dark', theme: gruvbox },
+    { name: 'Dracula', theme: dracula },
 ];
 
-function getSavedTheme(): ThemeOption {
-    if (typeof localStorage !== 'undefined') {
+function getSavedTheme(): ThemeOption {    if (typeof localStorage !== 'undefined') {
         const savedTheme = localStorage.getItem('baobox-theme');
         if (savedTheme) {
             const theme = themes.find(t => t.name === savedTheme);
             if (theme) return theme;
         }
     }
-    return themes[2]; // Default to Catppuccin Mocha
+    return themes[1]; // Default to Material Dark
 }
 
 // Create the theme store

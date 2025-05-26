@@ -462,12 +462,10 @@
 }
 
 .add-button:hover {
-    background: var(--accent-blue);
     transform: scale(1.05);
 }
 
 .add-button:active {
-    background: var(--accent-blue);
     transform: translateY(2px);
 }
 

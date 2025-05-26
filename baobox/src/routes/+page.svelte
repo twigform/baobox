@@ -22,7 +22,7 @@
     appWindow.startDragging();
   }
 
-    async function minimizeWindow() {
+  async function minimizeWindow() {
     await appWindow.minimize();
   }
 
@@ -50,14 +50,29 @@
     await appWindow.close();
   }
 
+  // Import the icon SVG content
+  const iconSvg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+  <g>
+    <path style="fill: currentColor;" d="m500,959.14c-52.36,0-103.16-10.26-150.99-30.49-46.19-19.54-87.67-47.5-123.29-83.12s-63.58-77.1-83.12-123.29c-20.23-47.84-30.49-98.64-30.49-150.99,0-76.27,22.13-150.09,63.99-213.48,36.08-54.64,84.97-98.98,142.4-129.41-8.51-17.55-12.93-36.8-12.93-56.77,0-72.09,58.65-130.73,130.73-130.73,28.81,0,56.14,9.2,79.02,26.59,15.25,11.6,27.82,26.55,36.71,43.42,9.31-2.88,19.05-4.36,28.93-4.36,53.99,0,97.91,43.92,97.91,97.91,0,7.28-.78,14.41-2.33,21.37,59.47,30.42,110.07,75.62,147.17,131.7,41.99,63.45,64.18,137.37,64.18,213.76,0,52.36-10.26,103.16-30.49,150.99-19.54,46.19-47.5,87.67-83.12,123.29-35.62,35.62-77.1,63.58-123.29,83.12-47.84,20.23-98.64,30.49-150.99,30.49Z"/>
+    <path style="fill: var(--lavender);" d="m436.3,63.36c49.16,0,90.64,32.79,103.83,77.68,11.77-7.6,25.78-12.03,40.84-12.03,41.65,0,75.41,33.76,75.41,75.41,0,11.84-2.74,23.04-7.6,33.01,127.65,56.98,216.62,185,216.62,333.82,0,201.8-163.59,365.39-365.39,365.39s-365.39-163.59-365.39-365.39c0-148.59,88.69-276.45,216.02-333.55-14.13-18.29-22.56-41.2-22.56-66.1,0-59.78,48.46-108.23,108.23-108.23"/>
+  </g>
+  <path style="fill: none; stroke: var(--lavender); stroke-linecap: round; stroke-linejoin: round; stroke-width: 45px;" d="m261.06,581.3c58.19,34.92,116.38,34.92,174.58,0"/>
+  <path style="fill: none; stroke: var(--lavender); stroke-linecap: round; stroke-linejoin: round; stroke-width: 45px;" d="m564.36,581.3c58.19,34.92,116.38,34.92,174.58,0"/>
+  <path style="fill: none; stroke: var(--lavender); stroke-linecap: round; stroke-linejoin: round; stroke-width: 45px;" d="m324.56,758.64c116.96,70.18,233.93,70.18,350.89,0"/>
+</svg>`;
 </script>
-
 
 <main>
   <!-- svelte-ignore a11y-no-static-element-interactions -->
   <header on:mousedown={dragWindow}>
     <div class="header-content">
-      <h1>BaoBox Board</h1>
+      <div class="title-container">
+        <div class="app-icon">
+          {@html iconSvg}
+        </div>
+        <h1>BaoBox Board</h1>
+      </div>
       <div class="window-controls">
         <button class="control-btn settings" on:click={() => isSettingsOpen = true} title="Settings">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
@@ -83,7 +98,6 @@
     </div>
   </header>
 
-
   <div class="board">
     {#each $columns as column (column.id)}
       <KanbanColumn {column} />
@@ -95,8 +109,6 @@
   :root {
     font-family: Source Code Pro, monospace;
   }
-
-  
 
   main {
     padding: 15px;
@@ -114,15 +126,38 @@
     margin-bottom: 15px;
     animation: slideDown 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
   }
+
   .header-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 0 8px;
   }
+
+  .title-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .app-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--lavender);
+  }
+
+  .app-icon :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+
   h1 {
     margin: 0;
     color: var(--lavender);
-    font-size: 28px;
+    font-size: 22px;
     font-weight: 600;
   }
 
