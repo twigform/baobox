@@ -618,19 +618,26 @@ p {
 .add-task-form {
     background: var(--base);
     border: solid 2px var(--surface1);
-    border-radius: 10px;
-    padding: 12px;
+    border-radius: var(--task-radius);
+    padding: 16px;
     color: var(--text);
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     width: 100%;
     box-sizing: border-box;
+    box-shadow: var(--task-shadow);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.add-task-form:focus-within {
+    border-color: var(--lavender);
+    transform: translateY(-1px);
 }
 
 .add-task-form input,
 .add-task-form textarea {
     width: 100%;
-    padding: 8px;
-    margin-bottom: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
     border: 2px solid var(--surface1);
     border-radius: 10px;
     font-size: 0.9rem;
@@ -649,61 +656,74 @@ p {
 .add-task-form input::placeholder,
 .add-task-form textarea::placeholder {
     color: var(--text);
-    opacity: 0.8;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+.add-task-form input:focus::placeholder,
+.add-task-form textarea:focus::placeholder {
+    opacity: 0.3;
+}
+
+.add-task-form input:focus,
+.add-task-form textarea:focus {
+    border-color: var(--lavender);
+    background: var(--base);
+    outline: none;
 }
 
 .form-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 0;
-    margin-top: 8px;
+    gap: 8px;
+    margin-top: 12px;
 }
 
 .form-actions button {
-    padding: 6px 18px;
+    padding: 8px 20px;
     border-radius: 8px;
-    border: none;
+    border: 2px solid transparent;
     cursor: pointer;
     font-size: 0.95rem;
-    transition: all 0.2s ease;
-    margin-left: 8px;
-    margin-right: 0;
-}
-
-.form-actions button:first-child {
-    margin-left: 0;
+    font-weight: 500;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
 }
 
 .form-actions .add {
     background: var(--surface0);
-    border: 2px solid var(--accent-green);
     color: var(--text);
+    border: 2px solid var(--surface2);
 }
 
 .form-actions .add:hover {
-    background: var(--surface1);
-    transform: scale(1.05);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(var(--accent-green-rgb), 0.2);
 }
 
 .form-actions .add:active {
-    background: var(--surface1);
-    transform: scale(0.95);
+    transform: translateY(0);
 }
 
 .form-actions .cancel {
     background: var(--surface0);
-    border: 2px solid var(--accent-red);
     color: var(--text);
+    border: 2px solid var(--surface2);
 }
 
 .form-actions .cancel:hover {
     background: var(--surface1);
-    transform: scale(1.05);
+    border-color: var(--surface1);
+    transform: translateY(-2px);
 }
 
 .form-actions .cancel:active {
-    background: var(--surface1);
-    transform: scale(0.95);
+    transform: translateY(0);
 }
 
 .done-button {
