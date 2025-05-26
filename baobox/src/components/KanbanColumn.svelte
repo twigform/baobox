@@ -24,6 +24,7 @@
     let showAddTask = false;
     let newTaskTitle = '';
     let newTaskDescription = '';
+    let editingTaskId: number | null = null;
 
     onMount(() => {
         const handleKeydown = (e: KeyboardEvent) => {
@@ -54,11 +55,26 @@
         newTaskTitle = '';
         newTaskDescription = '';
         showAddTask = false;
+        editingTaskId = null;
     }
 
     function handleAddTask() {
         if (newTaskTitle.trim()) {
-            addTask(column.status, newTaskTitle.trim(), newTaskDescription.trim());
+            if (editingTaskId !== null) {
+                // Edit mode: update the task in column.tasks
+                const idx = column.tasks.findIndex((t: Task) => t.id === editingTaskId);
+                if (idx !== -1) {
+                    // Ensure id types match (cast editingTaskId to any for comparison)
+                    column.tasks[idx] = {
+                        ...column.tasks[idx],
+                        title: newTaskTitle.trim(),
+                        description: newTaskDescription.trim()
+                    };
+                }
+            } else {
+                // Add mode
+                addTask(column.status, newTaskTitle.trim(), newTaskDescription.trim());
+            }
             resetForm();
         }
     }
@@ -72,7 +88,7 @@
         
         setTimeout(() => {
             deleteTask(task.id, task.status);
-        }, 300); // Match this with your transition duration
+        }, 300); 
     }
 
     function onOutroEnd(taskId: number) {
@@ -223,6 +239,19 @@
         }
     }
 
+    function handleEditTask() {
+        if (selectedTask) {
+            newTaskTitle = selectedTask.title;
+            newTaskDescription = selectedTask.description || '';
+            editingTaskId = selectedTask.id;
+            showAddTask = true;
+            showContextMenu = false;
+            setTimeout(() => {
+                titleInput?.focus();
+            }, 0);
+        }
+    }
+
     onDestroy(() => {
         if (mouseUpHandler) {
             window.removeEventListener('mouseup', mouseUpHandler);
@@ -277,7 +306,7 @@
             ></textarea>
             <div class="form-actions">
                 <button class="cancel" on:click={resetForm}>Cancel</button>
-                <button class="add" on:click={handleAddTask}>Add Task</button>
+                <button class="add" on:click={handleAddTask}>{editingTaskId !== null ? 'Save Changes' : 'Add Task'}</button>
             </div>
         </div>
     {/if}
@@ -332,9 +361,18 @@
 >
     <button 
         type="button"
+        class="context-menu-item edit" 
+        on:click={handleEditTask}
+    >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+        Edit Task
+    </button>
+    <button 
+        type="button"
         class="context-menu-item delete" 
         on:click={handleDeleteTask}
     >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
         Delete Task
     </button>
 </ContextMenu>
@@ -521,16 +559,23 @@ p {
 .form-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 8px;
+    gap: 0;
+    margin-top: 8px;
 }
 
 .form-actions button {
-    padding: 6px 12px;
+    padding: 6px 18px;
     border-radius: 8px;
     border: none;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     transition: all 0.2s ease;
+    margin-left: 8px;
+    margin-right: 0;
+}
+
+.form-actions button:first-child {
+    margin-left: 0;
 }
 
 .form-actions .add {
@@ -543,6 +588,28 @@ p {
     background: var(--surface1);
     transform: scale(1.05);
 }
+
+.form-actions .add:active {
+    background: var(--surface1);
+    transform: scale(0.95);
+}
+
+.form-actions .cancel {
+    background: var(--surface0);
+    border: 2px solid var(--accent-red);
+    color: var(--text);
+}
+
+.form-actions .cancel:hover {
+    background: var(--surface1);
+    transform: scale(1.05);
+}
+
+.form-actions .cancel:active {
+    background: var(--surface1);
+    transform: scale(0.95);
+}
+
 
 .done-button {
   position: absolute;
@@ -634,22 +701,43 @@ p {
 
 .context-menu-item {
     animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-    padding: 8px 12px;
+    padding: 10px 18px;
     cursor: pointer;
     border-radius: 8px;
-    font-size: 0.9rem;
+    font-size: 1rem;
     color: var(--text);
-    transition: background 0.2s ease;
-    transition: transform 0.1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transition: background 0.2s ease, transform 0.1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     background: transparent;
     border: none;
     width: 100%;
     font-family: inherit;
     text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
 }
 
-.context-menu-item:hover {
+.context-menu-item:last-child {
+    margin-bottom: 0;
+}
+
+.context-menu-item svg {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.context-menu-item.edit {
+    color: var(--accent-blue);
+    border: solid 2px var(--accent-blue);
+}
+.context-menu-item.edit:hover {
     background: var(--surface1);
+}
+.context-menu-item.edit:active {
+    transform: scale(0.95);
 }
 
 .context-menu-item.delete {
@@ -659,7 +747,6 @@ p {
 .context-menu-item.delete:hover {
     background: var(--surface1);
 }
-
 .context-menu-item.delete:active {
     transform: scale(0.95);
 }
