@@ -1,7 +1,7 @@
 <!-- filepath: src/components/KanbanColumn.svelte -->
 <script lang="ts">
     import type { Column, Task } from '$lib/types';
-    import { moveTask, draggedTask, dragOverColumn, addTask, deleteTask } from '$lib/stores';
+    import { moveTask, draggedTask, dragOverColumn, addTask, deleteTask, editTask } from '$lib/stores';
     import { onMount, onDestroy } from 'svelte';
     import { get } from 'svelte/store';
     import ContextMenu from './ContextMenu.svelte';
@@ -24,7 +24,7 @@
     let showAddTask = false;
     let newTaskTitle = '';
     let newTaskDescription = '';
-    let editingTaskId: number | null = null;
+    let editingTaskId: string | null = null;
 
     onMount(() => {
         const handleKeydown = (e: KeyboardEvent) => {
@@ -61,16 +61,8 @@
     function handleAddTask() {
         if (newTaskTitle.trim()) {
             if (editingTaskId !== null) {
-                // Edit mode: update the task in column.tasks
-                const idx = column.tasks.findIndex((t: Task) => t.id === editingTaskId);
-                if (idx !== -1) {
-                    // Ensure id types match (cast editingTaskId to any for comparison)
-                    column.tasks[idx] = {
-                        ...column.tasks[idx],
-                        title: newTaskTitle.trim(),
-                        description: newTaskDescription.trim()
-                    };
-                }
+                // Edit mode: update the task in the store
+                editTask(editingTaskId, column.status, newTaskTitle.trim(), newTaskDescription.trim());
             } else {
                 // Add mode
                 addTask(column.status, newTaskTitle.trim(), newTaskDescription.trim());
@@ -80,7 +72,7 @@
     }
 
     function handleDeleteTaskAnimated(task: Task) {
-        const taskElement = document.querySelector(`[data-task-id="${task.id}"]`);
+        const taskElement = document.querySelector(`[data-task-id="${task.id}"]`) as HTMLElement;
         if (taskElement) {
             taskElement.style.transform = 'scale(0.9)';
             taskElement.style.opacity = '0';
@@ -91,7 +83,7 @@
         }, 300); 
     }
 
-    function onOutroEnd(taskId: number) {
+    function onOutroEnd(taskId: string) {
         deleteTask(taskId, column.status);
         deletingTasks.delete(taskId);
     }
@@ -195,7 +187,10 @@
         const overColumn = get(dragOverColumn);
 
         if (dragged.task && overColumn) {
-            moveTask(dragged.task.id, dragged.task.status, overColumn);
+            // Ensure overColumn is a valid status
+            if (overColumn === 'todo' || overColumn === 'inProgress' || overColumn === 'done') {
+                moveTask(dragged.task.id, dragged.task.status, overColumn);
+            }
         }
 
         if (ghostElement) {
@@ -286,7 +281,7 @@
                 on:keydown={(e) => {
                     if (e.key === "Enter") {
                     e.preventDefault();
-                    descInput.focus();
+                    descInput?.focus();
                     }
                 }}
             />

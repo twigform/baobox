@@ -102,3 +102,20 @@ export function moveTask(taskId: string, fromStatus: 'todo' | 'inProgress' | 'do
         return cols;
     });
 }
+
+export function editTask(taskId: string, status: string, newTitle: string, newDescription: string) {
+    columns.update(cols => {
+        const column = cols.find(col => col.status === status);
+        if (column) {
+            const idx = column.tasks.findIndex(task => task.id === taskId);
+            if (idx !== -1) {
+                column.tasks[idx] = {
+                    ...column.tasks[idx],
+                    title: newTitle,
+                    description: newDescription
+                };
+            }
+        }
+        return cols;
+    });
+}
