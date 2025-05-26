@@ -147,13 +147,20 @@
         taskElement.style.opacity = '0.5';
     }
 
+    let placeholderElement: HTMLElement | null = null;
+    let currentInsertIndex: number | null = null;
+
+    let dropTarget = {
+        columnStatus: null as string | null,
+        index: null as number | null
+    };
+
     function handleDragMove(event: MouseEvent) {
         const dragged = get(draggedTask);
         if (!dragged.task || !ghostElement) return;
 
         requestAnimationFrame(() => {
             if (ghostElement) {
-                // Move ghost element
                 ghostElement.style.left = `${event.clientX - dragged.mouseOffset.x}px`;
                 ghostElement.style.top = `${event.clientY - dragged.mouseOffset.y}px`;
             }
@@ -161,7 +168,14 @@
 
         const columns = document.querySelectorAll('.column');
         let foundColumn = false;
-        
+
+        // Create placeholder only once if it doesn't exist
+        if (!placeholderElement) {
+            placeholderElement = document.createElement('div');
+            placeholderElement.className = 'task-placeholder';
+            placeholderElement.style.transition = 'transform 0.15s ease';
+        }
+
         columns.forEach((col) => {
             const rect = col.getBoundingClientRect();
             if (
@@ -174,25 +188,71 @@
                 if (columnStatus) {
                     dragOverColumn.set(columnStatus);
                     foundColumn = true;
+
+                    const tasksContainer = col.querySelector('.tasks');
+                    if (tasksContainer) {
+                        const tasks = Array.from(tasksContainer.children).filter(
+                            el => el !== placeholderElement
+                        );
+                        
+                        let insertIndex = 0;
+                        
+                        if (tasks.length > 0) {
+                            for (let i = 0; i < tasks.length; i++) {
+                                const taskRect = tasks[i].getBoundingClientRect();
+                                if (event.clientY < taskRect.top + taskRect.height / 2) {
+                                    insertIndex = i;
+                                    break;
+                                }
+                                if (i === tasks.length - 1) {
+                                    insertIndex = tasks.length;
+                                }
+                            }
+                        }
+
+                        dropTarget = {
+                            columnStatus,
+                            index: insertIndex
+                        };
+
+                        // Only move placeholder if position changed
+                        if (!placeholderElement.parentElement || 
+                            placeholderElement.nextElementSibling !== (tasks[insertIndex] || null)) {
+                            
+                            if (tasks.length === 0 || insertIndex === tasks.length) {
+                                tasksContainer.appendChild(placeholderElement);
+                            } else {
+                                tasksContainer.insertBefore(placeholderElement, tasks[insertIndex]);
+                            }
+                        }
+                    }
                 }
             }
         });
 
         if (!foundColumn) {
             dragOverColumn.set(null);
+            if (placeholderElement.parentElement) {
+                placeholderElement.remove();
+            }
+            dropTarget = { columnStatus: null, index: null };
         }
     }
 
     function stopDragging(event: MouseEvent) {
         const dragged = get(draggedTask);
-        const overColumn = get(dragOverColumn);
-
-        if (dragged.task && overColumn) {
-            // Ensure overColumn is a valid status
-            if (overColumn === 'todo' || overColumn === 'inProgress' || overColumn === 'done') {
-                moveTask(dragged.task.id, dragged.task.status, overColumn);
+        
+        if (dragged.task && dropTarget.columnStatus) {
+            // Use stored drop target instead of current column/position
+            if (dropTarget.columnStatus === 'todo' || 
+                dropTarget.columnStatus === 'inProgress' || 
+                dropTarget.columnStatus === 'done') {
+                moveTask(dragged.task.id, dragged.task.status, dropTarget.columnStatus, dropTarget.index);
             }
         }
+
+        // Reset drop target
+        dropTarget = { columnStatus: null, index: null };
 
         if (ghostElement) {
             ghostElement.style.opacity = '0';
@@ -217,6 +277,12 @@
         dragOverColumn.set(null);
         window.removeEventListener('mouseup', mouseUpHandler);
         window.removeEventListener('mousemove', mouseMoveHandler);
+
+        if (placeholderElement) {
+            placeholderElement.remove();
+            placeholderElement = null;
+        }
+        currentInsertIndex = null;
     }
 
     function handleContextMenu(event: MouseEvent, task: Task) {
@@ -257,6 +323,9 @@
         }
         if (ghostElement) {
             ghostElement.remove();
+        }
+        if (placeholderElement) {
+            placeholderElement.remove();
         }
     });
 </script>
@@ -637,7 +706,6 @@ p {
     transform: scale(0.95);
 }
 
-
 .done-button {
     position: absolute;
     top: 8px;
@@ -678,29 +746,6 @@ p {
     color: inherit;
 }
 
-
-.form-actions .add:active {
-    background: var(--surface1);
-    transform: scale(0.95);
-}
-
-.form-actions .cancel {
-    background: var(--surface0);
-    border: 2px solid var(--accent-red);
-    color: var(--text);
-}
-
-.form-actions .cancel:hover {
-    background: var(--surface1);
-    transform: scale(1.05);
-}
-
-.form-actions .cancel:active {
-    background: var(--surface1);
-    transform: scale(0.95);
-}
-
-
 :global(.task-ghost) {
     position: fixed;
     border: var(--task-border);
@@ -735,7 +780,6 @@ p {
     font-size: 0.9rem;
     color: var(--subtext);
 }
-
 
 .context-menu-item {
     animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
@@ -796,10 +840,6 @@ p {
     transform: scale(0.98);
 }
 
-.context-menu-item svg {
-    color: currentColor;
-}
-
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -820,4 +860,13 @@ p {
     }
 }
 
+:global(.task-placeholder) {
+    height: 80px;
+    border: 2px dashed var(--surface2);
+    border-radius: var(--task-radius);
+    background: var(--surface0);
+    margin: 8px 0;
+    pointer-events: none;
+    will-change: transform;
+}
 </style>

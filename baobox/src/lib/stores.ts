@@ -78,7 +78,7 @@ export function deleteTask(taskId: string, status: string) {
     });
 }
 
-export function moveTask(taskId: string, fromStatus: 'todo' | 'inProgress' | 'done', toStatus: 'todo' | 'inProgress' | 'done', targetIndex?: number) {
+export function moveTask(taskId: string, fromStatus: 'todo' | 'inProgress' | 'done', toStatus: 'todo' | 'inProgress' | 'done', insertIndex: number | null = null) {
     columns.update(cols => {
         const fromColumn = cols.find(col => col.status === fromStatus);
         const toColumn = cols.find(col => col.status === toStatus);
@@ -93,8 +93,8 @@ export function moveTask(taskId: string, fromStatus: 'todo' | 'inProgress' | 'do
         task.status = toStatus;
         
         // Insert task at target position
-        if (targetIndex !== undefined) {
-            toColumn.tasks.splice(targetIndex, 0, task);
+        if (insertIndex !== null) {
+            toColumn.tasks.splice(insertIndex, 0, task);
         } else {
             toColumn.tasks.push(task);
         }
