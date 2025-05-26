@@ -184,6 +184,11 @@
     transform: translateY(0) scale(0.97);
   }
 
+  .control-btn.settings:hover svg {
+    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    transform: rotate(120deg);
+  }
+
   @keyframes fadeIn {
     from {
       opacity: 0;
