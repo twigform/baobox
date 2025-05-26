@@ -3,3 +3,11 @@
 // See: https://v2.tauri.app/start/frontend/sveltekit/ for more info
 export const prerender = true;
 export const ssr = false;
+
+import { browser } from '$app/environment';
+import { initUIPreferencesSync } from '$lib/uiPreferencesSync';
+
+// Initialize UI preferences sync when the app loads in the browser
+if (browser) {
+    initUIPreferencesSync();
+}

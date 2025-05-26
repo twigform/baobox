@@ -1,12 +1,23 @@
 <script lang="ts">
     import { currentTheme, themes } from '$lib/themes';
+    import { uiPreferences } from '$lib/stores/uiPreferences';
+    import { fade } from 'svelte/transition';
 
-    export let isOpen = false;    function handleThemeChange(theme) {
+    export let isOpen = false;
+    let activeTab: 'themes' | 'interface' = 'themes';    function handleThemeChange(theme: { name: string; theme: any }) {
         currentTheme.setTheme(theme);
+    }
+
+    function togglePreference(key: 'showShadows' | 'showBorders' | 'showRoundedCorners') {
+        uiPreferences.togglePreference(key);
     }
 
     function closeModal() {
         isOpen = false;
+    }
+
+    function setTab(tab: typeof activeTab) {
+        activeTab = tab;
     }
 </script>
 
@@ -21,28 +32,95 @@
                 </svg>
             </button>
         </div>
-        <div class="settings-section">
-            <h3>Theme</h3>
-            <div class="theme-options">
-                {#each themes as theme}
-                    <button
-                        class="theme-btn"
-                        class:active={$currentTheme.name === theme.name}
-                        on:click={() => handleThemeChange(theme)}
-                    >
-                        <div class="theme-preview" style="
-                            --preview-base: {theme.theme.base};
-                            --preview-surface0: {theme.theme.surface0};
-                            --preview-text: {theme.theme.text};
-                        ">
-                            <div class="preview-header"></div>
-                            <div class="preview-content"></div>
-                        </div>
-                        {theme.name}
-                    </button>
-                {/each}
-            </div>
+
+        <div class="tabs">
+            <button 
+                class="tab-button" 
+                class:active={activeTab === 'themes'}
+                on:click={() => setTab('themes')}
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle></svg>
+                Themes
+            </button>
+            <button 
+                class="tab-button" 
+                class:active={activeTab === 'interface'}
+                on:click={() => setTab('interface')}
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                Interface
+            </button>
         </div>
+
+        {#if activeTab === 'themes'}
+            <div class="tab-content" in:fade={{ duration: 150 }}>
+                <div class="settings-section">
+                    <h3>Theme</h3>
+                    <div class="theme-options">
+                        {#each themes as theme}
+                            <button
+                                class="theme-btn"
+                                class:active={$currentTheme.name === theme.name}
+                                on:click={() => handleThemeChange(theme)}
+                            >
+                                <div class="theme-preview" style="
+                                    --preview-base: {theme.theme.base};
+                                    --preview-surface0: {theme.theme.surface0};
+                                    --preview-text: {theme.theme.text};
+                                ">
+                                    <div class="preview-header"></div>
+                                    <div class="preview-content"></div>
+                                </div>
+                                {theme.name}
+                            </button>
+                        {/each}
+                    </div>
+                </div>
+            </div>
+        {:else}
+            <div class="tab-content" in:fade={{ duration: 150 }}>
+                <div class="settings-section">
+                    <h3>Interface Options</h3>
+                    <div class="interface-options">
+                        <label class="toggle-wrapper">
+                            <span>Show Shadows</span>
+                            <button
+                                class="toggle-button"
+                                class:active={$uiPreferences.showShadows}
+                                on:click={() => togglePreference('showShadows')}
+                                aria-pressed={$uiPreferences.showShadows}
+                            >
+                                <div class="toggle-slider"></div>
+                            </button>
+                        </label>
+
+                        <label class="toggle-wrapper">
+                            <span>Show Borders</span>
+                            <button
+                                class="toggle-button"
+                                class:active={$uiPreferences.showBorders}
+                                on:click={() => togglePreference('showBorders')}
+                                aria-pressed={$uiPreferences.showBorders}
+                            >
+                                <div class="toggle-slider"></div>
+                            </button>
+                        </label>
+
+                        <label class="toggle-wrapper">
+                            <span>Rounded Corners</span>
+                            <button
+                                class="toggle-button"
+                                class:active={$uiPreferences.showRoundedCorners}
+                                on:click={() => togglePreference('showRoundedCorners')}
+                                aria-pressed={$uiPreferences.showRoundedCorners}
+                            >
+                                <div class="toggle-slider"></div>
+                            </button>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        {/if}
     </div>
 </div>
 {/if}
@@ -102,6 +180,60 @@
 
     .close-btn:hover {
         background: var(--surface1);
+    }
+
+    .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid var(--surface1);
+    }
+
+    .tab-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: transparent;
+        border: none;
+        color: var(--text);
+        cursor: pointer;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+
+    .tab-button svg {
+        opacity: 0.7;
+        transition: all 0.2s ease;
+    }
+
+    .tab-button:hover {
+        background: var(--surface1);
+    }
+
+    .tab-button:hover svg {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+
+    .tab-button.active {
+        background: var(--surface1);
+        color: var(--blue);
+    }
+
+    .tab-button.active svg {
+        opacity: 1;
+        stroke: var(--blue);
+    }
+
+    .tab-content {
+        min-height: 200px;
+    }
+
+    .settings-section:first-child {
+        margin-top: 0;
     }
 
     .settings-section {
@@ -181,6 +313,72 @@
         background: var(--preview-text);
         opacity: 0.5;
         border-radius: 4px;
+    }
+
+    .interface-options {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .toggle-wrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--text);
+        font-size: 0.95rem;
+    }
+
+    .toggle-button {
+        position: relative;
+        width: 48px;
+        height: 24px;
+        border-radius: 12px;
+        background: var(--surface1);
+        border: 2px solid var(--surface2);
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 0;
+    }
+
+    .toggle-button:hover {
+        background: var(--surface2);
+    }
+
+    .toggle-button .toggle-slider {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 16px;
+        height: 16px;
+        background: var(--text);
+        border-radius: 50%;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .toggle-button.active {
+        background: var(--blue);
+        border-color: var(--blue);
+    }
+
+    .toggle-button.active .toggle-slider {
+        transform: translateX(24px);
+        background: white;
+    }
+
+    .toggle-button:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--blue);
+    }
+
+    .toggle-button:active .toggle-slider {
+        width: 20px;
+        transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .toggle-button.active:active .toggle-slider {
+        transform: translateX(20px);
+        transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     @keyframes fadeIn {

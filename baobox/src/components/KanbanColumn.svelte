@@ -2,6 +2,7 @@
 <script lang="ts">
     import type { Column, Task } from '$lib/types';
     import { moveTask, draggedTask, dragOverColumn, addTask, deleteTask, editTask } from '$lib/stores';
+    import { uiPreferences } from '$lib/stores/uiPreferences';
     import { onMount, onDestroy } from 'svelte';
     import { get } from 'svelte/store';
     import ContextMenu from './ContextMenu.svelte';
@@ -332,16 +333,16 @@
                     title="Done"
                 >
                     <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--accent-green)"
-                    stroke-width="3"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
                     >
-                    <polyline points="20 6 9 17 4 12" />
+                        <polyline points="20 6 9 17 4 12" />
                     </svg>
                 </button>
             </div>
@@ -359,7 +360,7 @@
         class="context-menu-item edit" 
         on:click={handleEditTask}
     >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
         Edit Task
     </button>
     <button 
@@ -367,43 +368,75 @@
         class="context-menu-item delete" 
         on:click={handleDeleteTask}
     >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
         Delete Task
     </button>
 </ContextMenu>
 
 <style>
-
-:root {
-    --base: #1e1e2e;
-    --mantle: #181825;
-    --crust: #11111b;
-    --text: #cdd6f4;
-    --lavender: #b4befe;
-    --surface0: #313244;
-    --surface1: #45475a;
-    --overlay: #6c7086;
-    --subtext: #a6adc8;
-    --accent-blue: #89b4fa;
-    --accent-green: #a6e3a1;
-    --accent-red: #f38ba8;
-    --accent-yellow: #f9e2af;
-    --accent-mauve: #cba6f7;
-    --scroll-thumb: #585b70;
-    --scroll-thumb-hover: #6c7086;
-}
-
 /* Column */
 .column {
     background: var(--surface0);
-    border-radius: 15px;
+    border-radius: var(--column-radius);
     min-width: 300px;
     width: 300px;
     min-height: 400px;
     padding: 16px;
-    transition: background-color 0.2s ease, transform 0.2s ease-out;
+    transition: all 0.2s ease-out;
     display: flex;
     flex-direction: column;
+    border: var(--column-border);
+    box-shadow: var(--column-shadow);
+}
+
+/* Set dynamic variables based on preferences */
+:global(:root) {
+    --task-radius: var(--rounded-corners);
+    --column-radius: var(--rounded-corners);
+    --task-border: var(--border-style);
+    --column-border: var(--border-style);
+    --task-shadow: var(--shadow-style);
+    --column-shadow: var(--shadow-style);
+}
+
+:global(:root[data-shadows="true"]) {
+    --shadow-style: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+:global(:root[data-shadows="false"]) {
+    --shadow-style: none;
+}
+
+:global(:root[data-borders="true"]) {
+    --border-style: 2px solid var(--surface1);
+}
+
+:global(:root[data-borders="false"]) {
+    --border-style: none;
+}
+
+:global(:root[data-rounded="true"]) {
+    --rounded-corners: 15px;
+}
+
+:global(:root[data-rounded="false"]) {
+    --rounded-corners: 0px;
+}
+
+.task {
+    background: var(--base);
+    border: var(--task-border);
+    border-radius: var(--task-radius);
+    padding: 12px;
+    cursor: grab;
+    user-select: none;
+    text-wrap: pretty;
+    hyphens: auto;
+    word-break: break-word;
+    height: fit-content;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+    position: relative;
+    box-shadow: var(--task-shadow);
 }
 
 /* Header */
@@ -470,8 +503,8 @@
 
 .task {
     background: var(--base);
-    border: solid 2px var(--surface1);
-    border-radius: 10px;
+    border: var(--task-border);
+    border-radius: var(--task-radius);
     padding: 12px;
     cursor: grab;
     user-select: none;
@@ -481,6 +514,7 @@
     height: fit-content;
     transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
     position: relative;
+    box-shadow: var(--task-shadow);
 }
 
 .task.being-dragged {
@@ -607,34 +641,45 @@ p {
 
 
 .done-button {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: transparent;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
-  opacity: 0;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: 2px solid var(--accent-green);
+    padding: 4px;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50% !important;
+    width: 28px;
+    height: 28px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: var(--accent-green);
 }
 
 .task:hover .done-button {
-  opacity: 1;
+    opacity: 1;
 }
 
-.done-button:hover svg {
+.done-button:hover {
     transform: scale(1.1);
-    transition: all 0.2s ease;
+    background: none;
+    border-color: var(--accent-green);
 }
 
-
-.done-button:active svg {
+.done-button:active {
     transform: scale(0.95);
 }
+
+.done-button svg {
+    width: 14px;
+    height: 14px;
+    color: inherit;
+}
+
 
 .form-actions .add:active {
     background: var(--surface1);
@@ -660,13 +705,13 @@ p {
 
 :global(.task-ghost) {
     position: fixed;
-    border: solid 2px var(--surface1);
+    border: var(--task-border);
     pointer-events: none;
     z-index: 1000;
     background: var(--base);
-    border-radius: 10px;
+    border-radius: var(--task-radius);
     padding: 12px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--task-shadow);
     width: 280px;
     text-wrap: pretty;
     hyphens: auto;
@@ -698,12 +743,12 @@ p {
     animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
     padding: 10px 18px;
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: 8px !important;
     font-size: 1rem;
     color: var(--text);
-    transition: background 0.2s ease, transform 0.1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    background: transparent;
-    border: none;
+    transition: all 0.2s ease;
+    background: var(--surface0);
+    border: 2px solid transparent;
     width: 100%;
     font-family: inherit;
     text-align: left;
@@ -722,28 +767,39 @@ p {
     vertical-align: middle;
     margin-right: 8px;
     flex-shrink: 0;
+    stroke-width: 2;
 }
 
 .context-menu-item.edit {
     color: var(--accent-blue);
-    border: solid 2px var(--accent-blue);
+    border: 2px solid var(--accent-blue);
 }
+
 .context-menu-item.edit:hover {
     background: var(--surface1);
+    transform: translateY(-1px);
 }
+
 .context-menu-item.edit:active {
-    transform: scale(0.95);
+    transform: scale(0.98);
 }
 
 .context-menu-item.delete {
     color: var(--accent-red);
-    border: solid 2px var(--accent-red);
+    border: 2px solid var(--accent-red);
 }
+
 .context-menu-item.delete:hover {
     background: var(--surface1);
+    transform: translateY(-1px);
 }
+
 .context-menu-item.delete:active {
-    transform: scale(0.95);
+    transform: scale(0.98);
+}
+
+.context-menu-item svg {
+    color: currentColor;
 }
 
 @keyframes fadeIn {
