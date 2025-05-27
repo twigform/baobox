@@ -266,7 +266,7 @@
                     const tasksContainer = col.querySelector('.tasks');
                     if (tasksContainer) {
                         const tasks = Array.from(tasksContainer.children).filter(
-                            el => el !== placeholderElement
+                            el => el !== placeholderElement && !el.classList.contains('being-dragged')
                         );
                         
                         let insertIndex = 0;
