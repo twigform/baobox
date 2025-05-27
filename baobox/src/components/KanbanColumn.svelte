@@ -1303,7 +1303,7 @@ p {
     padding: 4px 8px;
     background: var(--surface0);
     border: 1px solid var(--surface1);
-    border-radius: 4px;
+    border-radius: 15px;
     color: var(--text);
     cursor: pointer;
     transition: all 0.2s ease;

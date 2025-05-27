@@ -200,8 +200,7 @@
 </div>
 {/if}
 
-<style>
-    .modal-overlay {
+<style>    .modal-overlay {
         position: fixed;
         top: 0;
         left: 0;
@@ -212,6 +211,7 @@
         justify-content: center;
         align-items: center;
         z-index: 1000;
+        backdrop-filter: blur(4px);
         animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -670,9 +670,7 @@
     .creator a:hover {
         opacity: 0.8;
         text-decoration: underline;
-    }
-
-    @keyframes fadeIn {
+    }    @keyframes fadeIn {
         from { 
             opacity: 0;
             backdrop-filter: blur(0px);
