@@ -1,5 +1,5 @@
 import { writable, get } from 'svelte/store';
-import type { Task, Column } from './types';
+import type { Task, Column, Tag } from './types';
 
 // Load tasks from localStorage if available
 const savedColumns = localStorage.getItem('kanbanColumns');
@@ -34,10 +34,41 @@ const initialColumns: Column[] = savedColumns ? JSON.parse(savedColumns) : [
 
 // Load tags from localStorage if available
 const savedTags = localStorage.getItem('kanbanTags');
-const initialTags = savedTags ? JSON.parse(savedTags) : [];
+let initialTags: Tag[] = [];
+if (savedTags) {
+    const parsed = JSON.parse(savedTags);
+    // Handle backward compatibility: convert string tags to Tag objects
+    initialTags = parsed.map((tag: any) => {
+        if (typeof tag === 'string') {
+            return { name: tag };
+        }
+        return tag;
+    });
+} else {
+    initialTags = [];
+}
+
+// Also handle backward compatibility for tasks
+if (savedColumns) {
+    const parsedColumns = JSON.parse(savedColumns);
+    parsedColumns.forEach((col: any) => {
+        col.tasks.forEach((task: any) => {
+            if (task.tags && Array.isArray(task.tags)) {
+                task.tags = task.tags.map((tag: any) => {
+                    if (typeof tag === 'string') {
+                        return { name: tag };
+                    }
+                    return tag;
+                });
+            }
+        });
+    });
+    // Update the initial columns with converted data
+    initialColumns.splice(0, initialColumns.length, ...parsedColumns);
+}
 
 export const columns = writable<Column[]>(initialColumns);
-export const tags = writable<string[]>(initialTags);
+export const tags = writable<Tag[]>(initialTags);
 
 // Save tasks and tags to localStorage whenever they change
 columns.subscribe((value) => {
@@ -61,7 +92,7 @@ function generateId(): string {
     return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
 
-export function addTask(columnStatus: 'todo' | 'inProgress' | 'done', title: string, description: string, tags: string[] = []) {
+export function addTask(columnStatus: 'todo' | 'inProgress' | 'done', title: string, description: string, tags: Tag[] = []) {
     const newTask: Task = {
         id: generateId(),
         title,
@@ -114,7 +145,7 @@ export function moveTask(taskId: string, fromStatus: 'todo' | 'inProgress' | 'do
     });
 }
 
-export function editTask(taskId: string, status: string, newTitle: string, newDescription: string, newTags: string[] = []) {
+export function editTask(taskId: string, status: string, newTitle: string, newDescription: string, newTags: Tag[] = []) {
     columns.update(cols => {
         const column = cols.find(col => col.status === status);
         if (column) {
@@ -133,17 +164,17 @@ export function editTask(taskId: string, status: string, newTitle: string, newDe
 }
 
 // Tag management functions
-export function addTag(tag: string) {
+export function addTag(tag: Tag) {
     tags.update(currentTags => {
-        if (!currentTags.includes(tag)) {
+        if (!currentTags.find(t => t.name === tag.name)) {
             return [...currentTags, tag];
         }
         return currentTags;
     });
 }
 
-export function deleteTag(tag: string) {
-    tags.update(currentTags => currentTags.filter(t => t !== tag));
+export function deleteTag(tagName: string) {
+    tags.update(currentTags => currentTags.filter(t => t.name !== tagName));
     
     // Remove the tag from all tasks
     columns.update(cols => {
@@ -151,18 +182,35 @@ export function deleteTag(tag: string) {
             ...col,
             tasks: col.tasks.map(task => ({
                 ...task,
-                tags: task.tags.filter(t => t !== tag)
+                tags: task.tags.filter(t => t.name !== tagName)
             }))
         }));
     });
 }
 
-export function addTagToTask(taskId: string, status: string, tag: string) {
+export function updateTag(oldName: string, newTag: Tag) {
+    tags.update(currentTags => 
+        currentTags.map(t => t.name === oldName ? newTag : t)
+    );
+    
+    // Update the tag in all tasks
+    columns.update(cols => {
+        return cols.map(col => ({
+            ...col,
+            tasks: col.tasks.map(task => ({
+                ...task,
+                tags: task.tags.map(t => t.name === oldName ? newTag : t)
+            }))
+        }));
+    });
+}
+
+export function addTagToTask(taskId: string, status: string, tag: Tag) {
     columns.update(cols => {
         const column = cols.find(col => col.status === status);
         if (column) {
             const task = column.tasks.find(t => t.id === taskId);
-            if (task && !task.tags.includes(tag)) {
+            if (task && !task.tags.find(t => t.name === tag.name)) {
                 task.tags = [...task.tags, tag];
             }
         }
@@ -170,13 +218,13 @@ export function addTagToTask(taskId: string, status: string, tag: string) {
     });
 }
 
-export function removeTagFromTask(taskId: string, status: string, tag: string) {
+export function removeTagFromTask(taskId: string, status: string, tagName: string) {
     columns.update(cols => {
         const column = cols.find(col => col.status === status);
         if (column) {
             const task = column.tasks.find(t => t.id === taskId);
             if (task) {
-                task.tags = task.tags.filter(t => t !== tag);
+                task.tags = task.tags.filter(t => t.name !== tagName);
             }
         }
         return cols;

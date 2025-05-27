@@ -1,7 +1,7 @@
 <!-- filepath: src/components/KanbanColumn.svelte -->
 <script lang="ts">
-    import type { Column, Task } from '$lib/types';
-    import { moveTask, draggedTask, dragOverColumn, addTask, deleteTask, editTask, tags, addTag, deleteTag, addTagToTask, removeTagFromTask } from '$lib/stores';
+    import type { Column, Task, Tag } from '$lib/types';
+    import { moveTask, draggedTask, dragOverColumn, addTask, deleteTask, editTask, tags, addTag, deleteTag, addTagToTask, removeTagFromTask, updateTag } from '$lib/stores';
     import { uiPreferences } from '$lib/stores/uiPreferences';
     import { onMount, onDestroy } from 'svelte';
     import { get } from 'svelte/store';
@@ -14,7 +14,7 @@
 
     export let column: Column;
 
-    let deletingTasks = new Set<number>();
+    let deletingTasks = new Set<string>();
     let titleInput: HTMLInputElement | null = null;
     let descInput: HTMLTextAreaElement | null = null;
     let columnElement: HTMLDivElement;
@@ -26,7 +26,8 @@
     let newTaskDescription = '';
     let editingTaskId: string | null = null;
     let newTag = '';
-    let selectedTaskTags: string[] = [];
+    let newTagColor = '';
+    let selectedTaskTags: Tag[] = [];
     let showTagInput = false;
     let showContextMenu = false;
     let contextMenuX = 0;
@@ -35,6 +36,23 @@
 
     $: availableTags = $tags;
 
+    // Function to determine if a color is light or dark for text contrast
+    function getContrastColor(hexColor: string): string {
+        // Remove the hash if present
+        const color = hexColor.replace('#', '');
+        
+        // Convert to RGB
+        const r = parseInt(color.substr(0, 2), 16);
+        const g = parseInt(color.substr(2, 2), 16);
+        const b = parseInt(color.substr(4, 2), 16);
+        
+        // Calculate luminance
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        
+        // Return white for dark colors, black for light colors
+        return luminance > 0.5 ? '#000000' : '#ffffff';
+    }
+
     function resetForm() {
         newTaskTitle = '';
         newTaskDescription = '';
@@ -42,20 +60,26 @@
         showAddTask = false;
         editingTaskId = null;
         showTagInput = false;
+        newTagColor = '';
     }
 
     function handleAddTag() {
         if (newTag.trim()) {
             const trimmedTag = newTag.trim();
-            addTag(trimmedTag);
-            selectedTaskTags = [...selectedTaskTags, trimmedTag];
+            const tag: Tag = { 
+                name: trimmedTag, 
+                color: newTagColor || undefined 
+            };
+            addTag(tag);
+            selectedTaskTags = [...selectedTaskTags, tag];
             newTag = '';
+            newTagColor = '';
         }
     }
 
-    function handleTagSelection(tag: string) {
-        if (selectedTaskTags.includes(tag)) {
-            selectedTaskTags = selectedTaskTags.filter(t => t !== tag);
+    function handleTagSelection(tag: Tag) {
+        if (selectedTaskTags.find(t => t.name === tag.name)) {
+            selectedTaskTags = selectedTaskTags.filter(t => t.name !== tag.name);
         } else {
             selectedTaskTags = [...selectedTaskTags, tag];
         }
@@ -106,7 +130,7 @@
             <p>${task.description}</p>
             ${task.tags && task.tags.length > 0 ? `
                 <div class="task-tags">
-                    ${task.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    ${task.tags.map(tag => `<span class="tag" style="${tag.color ? `background-color: ${tag.color}; color: ${getContrastColor(tag.color)}; border-color: ${tag.color}` : ''}">${tag.name}</span>`).join('')}
                 </div>
             ` : ''}
         `;
@@ -226,8 +250,8 @@
                         };
 
                         // Only move placeholder if position changed
-                        if (!placeholderElement.parentElement || 
-                            placeholderElement.nextElementSibling !== (tasks[insertIndex] || null)) {
+                        if (placeholderElement && (!placeholderElement.parentElement || 
+                            placeholderElement.nextElementSibling !== (tasks[insertIndex] || null))) {
                             
                             if (tasks.length === 0 || insertIndex === tasks.length) {
                                 tasksContainer.appendChild(placeholderElement);
@@ -385,15 +409,15 @@
             <div class="tags-section">
                 <div class="selected-tags">
                     {#each selectedTaskTags as tag}
-                        <span class="tag">
-                            {tag}
+                        <span class="tag" style={tag.color ? `background-color: ${tag.color}; color: ${getContrastColor(tag.color)}; border-color: ${tag.color}` : ''}>
+                            {tag.name}
                             <button 
                                 class="remove-tag" 
                                 on:click={() => {
                                     if (editingTaskId) {
-                                        removeTagFromTask(editingTaskId, column.status, tag);
+                                        removeTagFromTask(editingTaskId, column.status, tag.name);
                                     }
-                                    selectedTaskTags = selectedTaskTags.filter(t => t !== tag);
+                                    selectedTaskTags = selectedTaskTags.filter(t => t.name !== tag.name);
                                 }}
                             >
                                 &times;
@@ -415,19 +439,26 @@
                                 }
                             }}
                         />
+                        <input
+                            type="color"
+                            bind:value={newTagColor}
+                            title="Tag color (optional)"
+                            class="color-picker"
+                        />
                         <button on:click={handleAddTag}>+</button>
                     </div>
                     <div class="available-tags">
                         {#each availableTags as tag}
                             <div 
                                 class="tag-option"
-                                class:selected={selectedTaskTags.includes(tag)}
+                                class:selected={selectedTaskTags.find(t => t.name === tag.name)}
+                                style={tag.color ? `background-color: ${tag.color}; color: ${getContrastColor(tag.color)}; border-color: ${tag.color}` : ''}
                                 on:click={() => {
-                                    if (selectedTaskTags.includes(tag)) {
+                                    if (selectedTaskTags.find(t => t.name === tag.name)) {
                                         if (editingTaskId) {
-                                            removeTagFromTask(editingTaskId, column.status, tag);
+                                            removeTagFromTask(editingTaskId, column.status, tag.name);
                                         }
-                                        selectedTaskTags = selectedTaskTags.filter(t => t !== tag);
+                                        selectedTaskTags = selectedTaskTags.filter(t => t.name !== tag.name);
                                     } else {
                                         if (editingTaskId) {
                                             addTagToTask(editingTaskId, column.status, tag);
@@ -436,10 +467,10 @@
                                     }
                                 }}
                             >
-                                <span>{tag}</span>
+                                <span>{tag.name}</span>
                                 <button 
                                     class="delete-tag"
-                                    on:click|stopPropagation={() => deleteTag(tag)}
+                                    on:click|stopPropagation={() => deleteTag(tag.name)}
                                     title="Delete tag"
                                 >
                                     &times;
@@ -477,7 +508,7 @@
                 {#if task.tags && task.tags.length > 0}
                     <div class="task-tags">
                         {#each task.tags as tag}
-                            <span class="tag">{tag}</span>
+                            <span class="tag" style={tag.color ? `background-color: ${tag.color}; color: ${getContrastColor(tag.color)}; border-color: ${tag.color}` : ''}>{tag.name}</span>
                         {/each}
                     </div>
                 {/if}
@@ -1024,13 +1055,29 @@ p {
     margin-bottom: 12px;
 }
 
-.new-tag input {
+.new-tag input[type="text"] {
     flex: 1;
     padding: 8px;
     border: 2px solid var(--surface1);
     border-radius: 6px;
     background: var(--base);
     color: var(--text);
+}
+
+.new-tag .color-picker {
+    width: 40px;
+    height: 36px;
+    padding: 2px;
+    border: 2px solid var(--surface1);
+    border-radius: 6px;
+    background: var(--base);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.new-tag .color-picker:hover {
+    border-color: var(--lavender);
+    transform: translateY(-1px);
 }
 
 .new-tag button {
