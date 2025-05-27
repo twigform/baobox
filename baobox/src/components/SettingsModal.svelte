@@ -270,35 +270,57 @@
         margin-bottom: 24px;
         padding-bottom: 16px;
         border-bottom: 2px solid var(--surface1);
+        position: relative;
     }
 
     .tab-button {
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 8px 16px;
+        padding: 10px 18px;
         background: transparent;
         border: none;
-        color: var(--text);
+        color: var(--subtext);
         cursor: pointer;
-        border-radius: 6px;
+        border-radius: 8px;
         font-size: 0.95rem;
+        font-weight: 500;
         transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        transform-origin: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .tab-button::before {
+        content: '';
+        position: absolute;
+        bottom: -16px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--blue);
+        transform: scaleX(0);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     .tab-button svg {
         opacity: 0.7;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
+        transform: scale(1);
     }
 
     .tab-button:hover {
         background: var(--surface1);
-        transform: translateY(-2px);
+        color: var(--text);
+        transform: translateY(-1px);
+    }
+
+    .tab-button:hover svg {
+        transform: scale(1.1) rotate(-5deg);
+        opacity: 0.9;
     }
 
     .tab-button:active {
-        transform: translateY(0) scale(0.95);
+        transform: translateY(1px) scale(0.98);
     }
 
     .tab-button.active {
@@ -306,13 +328,52 @@
         color: var(--blue);
     }
 
+    .tab-button.active::before {
+        transform: scaleX(1);
+    }
+
     .tab-button.active svg {
         opacity: 1;
         stroke: var(--blue);
+        transform: scale(1.1);
     }
 
     .tab-content {
-        min-height: 200px;
+        height: 400px;  /* Fixed height for all tabs */
+        overflow-y: auto;
+        transform-origin: top center;
+        animation: tabFadeIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        padding-right: 12px; /* Add padding for scrollbar */
+    }
+
+    /* Add custom scrollbar styling */
+    .tab-content::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .tab-content::-webkit-scrollbar-track {
+        background: var(--surface0);
+        border-radius: 4px;
+    }
+
+    .tab-content::-webkit-scrollbar-thumb {
+        background: var(--surface2);
+        border-radius: 4px;
+    }
+
+    .tab-content::-webkit-scrollbar-thumb:hover {
+        background: var(--surface1);
+    }
+
+    @keyframes tabFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px) scale(0.98);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
     }
 
     .settings-section:first-child {
