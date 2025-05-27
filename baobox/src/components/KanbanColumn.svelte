@@ -1,4 +1,3 @@
-<!-- filepath: src/components/KanbanColumn.svelte -->
 <script lang="ts">
     import type { Column, Task, Tag } from '$lib/types';
     import { moveTask, draggedTask, dragOverColumn, addTask, deleteTask, editTask, tags, addTag, deleteTag, addTagToTask, removeTagFromTask, updateTag } from '$lib/stores';
@@ -8,7 +7,7 @@
     import ContextMenu from './ContextMenu.svelte';
     import { flip } from 'svelte/animate';
     import { catppuccinMocha } from '$lib/theme';
-    import { fade } from 'svelte/transition';
+    import { fade, scale } from 'svelte/transition';
     import { bounceOut, cubicInOut, cubicOut, quintOut, backOut } from 'svelte/easing';
     import { slide } from 'svelte/transition';
 
@@ -33,23 +32,62 @@
     let contextMenuX = 0;
     let contextMenuY = 0;
     let selectedTask: Task | null = null;
+    let showColorPicker = false;
 
     $: availableTags = $tags;
 
-    // Function to determine if a color is light or dark for text contrast
+    function handleClickOutside(event: MouseEvent) {
+        if (showColorPicker) {
+            const colorPickerContainer = document.querySelector('.color-picker-container');
+            if (colorPickerContainer && !colorPickerContainer.contains(event.target as Node)) {
+                showColorPicker = false;
+            }
+        }
+    }
+
+    onMount(() => {
+        document.addEventListener('click', handleClickOutside);
+    });
+
+    onDestroy(() => {
+        if (mouseUpHandler) {
+            window.removeEventListener('mouseup', mouseUpHandler);
+        }
+        if (mouseMoveHandler) {
+            window.removeEventListener('mousemove', mouseMoveHandler);
+        }
+        if (ghostElement) {
+            ghostElement.remove();
+        }
+        if (placeholderElement) {
+            placeholderElement.remove();
+        }
+        document.removeEventListener('click', handleClickOutside);
+    });
+
+    const colorPalette = [
+        '#f38ba8', // pink
+        '#fab387', // peach
+        '#f9e2af', // yellow
+        '#a6e3a1', // green
+        '#94e2d5', // teal
+        '#89dceb', // sky
+        '#74c7ec', // sapphire
+        '#89b4fa', // blue
+        '#cba6f7', // mauve
+        '#f5c2e7', // flamingo
+        '#eba0ac', // maroon
+    ];
+
     function getContrastColor(hexColor: string): string {
-        // Remove the hash if present
         const color = hexColor.replace('#', '');
         
-        // Convert to RGB
         const r = parseInt(color.substr(0, 2), 16);
         const g = parseInt(color.substr(2, 2), 16);
         const b = parseInt(color.substr(4, 2), 16);
         
-        // Calculate luminance
         const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
         
-        // Return white for dark colors, black for light colors
         return luminance > 0.5 ? '#000000' : '#ffffff';
     }
 
@@ -61,6 +99,12 @@
         editingTaskId = null;
         showTagInput = false;
         newTagColor = '';
+        showColorPicker = false;
+    }
+
+    function selectColor(color: string) {
+        newTagColor = color;
+        showColorPicker = false;
     }
 
     function handleAddTag() {
@@ -91,10 +135,8 @@
             const trimmedDescription = newTaskDescription.trim();
             
             if (editingTaskId !== null) {
-                // Edit mode: update the task in the store
                 editTask(editingTaskId, column.status, trimmedTitle, trimmedDescription, [...selectedTaskTags]);
             } else {
-                // Add mode
                 addTask(column.status, trimmedTitle, trimmedDescription, [...selectedTaskTags]);
             }
             resetForm();
@@ -152,7 +194,6 @@
     }
 
     function startDragging(event: MouseEvent, task: Task) {
-        // Only handle left mouse button
         if (event.button !== 0) return;
         event.preventDefault();
         
@@ -203,7 +244,6 @@
         const columns = document.querySelectorAll('.column');
         let foundColumn = false;
 
-        // Create placeholder only once if it doesn't exist
         if (!placeholderElement) {
             placeholderElement = document.createElement('div');
             placeholderElement.className = 'task-placeholder';
@@ -249,7 +289,6 @@
                             index: insertIndex
                         };
 
-                        // Only move placeholder if position changed
                         if (placeholderElement && (!placeholderElement.parentElement || 
                             placeholderElement.nextElementSibling !== (tasks[insertIndex] || null))) {
                             
@@ -277,7 +316,6 @@
         const dragged = get(draggedTask);
         
         if (dragged.task && dropTarget.columnStatus) {
-            // Use stored drop target instead of current column/position
             if (dropTarget.columnStatus === 'todo' || 
                 dropTarget.columnStatus === 'inProgress' || 
                 dropTarget.columnStatus === 'done') {
@@ -285,7 +323,6 @@
             }
         }
 
-        // Reset drop target
         dropTarget = { columnStatus: null, index: null };
 
         if (ghostElement) {
@@ -300,13 +337,11 @@
             }, 150);
         }
 
-        // Reset opacity of original task with transition
         const tasks = document.querySelectorAll('.task');
         tasks.forEach(task => {
             (task as HTMLElement).style.opacity = '1';
         });
 
-        // Clean up
         draggedTask.set({ task: null, mouseOffset: { x: 0, y: 0 } });
         dragOverColumn.set(null);
         window.removeEventListener('mouseup', mouseUpHandler);
@@ -362,6 +397,7 @@
         if (placeholderElement) {
             placeholderElement.remove();
         }
+        document.removeEventListener('click', handleClickOutside);
     });
 </script>
 
@@ -439,12 +475,53 @@
                                 }
                             }}
                         />
-                        <input
-                            type="color"
-                            bind:value={newTagColor}
-                            title="Tag color (optional)"
-                            class="color-picker"
-                        />
+                        <div class="color-picker-container">
+                            <button
+                                type="button"
+                                class="color-picker-button"
+                                style={newTagColor ? `background-color: ${newTagColor}` : ''}
+                                on:click={() => showColorPicker = !showColorPicker}
+                                title="Choose tag color"
+                            >
+                                {#if newTagColor}
+                                    <div class="color-preview" style="background-color: {newTagColor}"></div>
+                                {:else}
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.098 19.902a3.75 3.75 0 0 0 5.304 0l6.401-6.402M6.75 21A3.75 3.75 0 0 1 3 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 0 0 3.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008Z" />
+                                    </svg>
+                                {/if}
+                            </button>
+                            {#if showColorPicker}
+                                <div 
+                                    class="color-picker-menu"
+                                    in:scale={{ duration: 200, start: 0.95, opacity: 0 }}
+                                    out:scale={{ duration: 150, start: 1, opacity: 0 }}
+                                >
+                                    <div class="color-grid">
+                                        {#each colorPalette as color}
+                                            <button
+                                                type="button"
+                                                class="color-option"
+                                                style="background-color: {color}"
+                                                on:click={() => selectColor(color)}
+                                                title={color}
+                                            ></button>
+                                        {/each}
+                                        <button
+                                            type="button"
+                                            class="color-option clear-color"
+                                            on:click={() => selectColor('')}
+                                            title="No color"
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            {/if}
+                        </div>
                         <button on:click={handleAddTag}>+</button>
                     </div>
                     <div class="available-tags">
@@ -1040,6 +1117,8 @@ p {
     border-radius: 8px;
     padding: 12px;
     border: 2px solid var(--surface1);
+    position: relative;
+    overflow: visible;
 }
 
 .selected-tags {
@@ -1064,7 +1143,11 @@ p {
     color: var(--text);
 }
 
-.new-tag .color-picker {
+.color-picker-container {
+    position: relative;
+}
+
+.color-picker-button {
     width: 40px;
     height: 36px;
     padding: 2px;
@@ -1073,11 +1156,77 @@ p {
     background: var(--base);
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
 }
 
-.new-tag .color-picker:hover {
+.color-picker-button:hover {
     border-color: var(--lavender);
     transform: translateY(-1px);
+}
+
+.color-preview {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.color-picker-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 9999;
+    background: var(--base);
+    border: 2px solid var(--surface1);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+    margin-top: 4px;
+    backdrop-filter: blur(12px);
+    overflow: visible;
+    width: 255px;
+    transform-origin: top left;
+}
+
+.color-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    width: 184px;
+}
+
+.color-option {
+    width: 24px;
+    height: 24px;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.color-option:hover {
+    transform: scale(1.15);
+    border-color: var(--text);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.clear-color {
+    background: var(--surface0) !important;
+    color: var(--text);
+    border: 2px dashed var(--surface2) !important;
+}
+
+.clear-color:hover {
+    border-color: var(--text) !important;
+    background: var(--surface1) !important;
 }
 
 .new-tag button {
@@ -1111,27 +1260,29 @@ p {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-}    .tag-option {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        padding: 4px 8px;
-        background: var(--surface0);
-        border: 1px solid var(--surface1);
-        border-radius: 4px;
-        color: var(--text);
-        cursor: pointer;
-        transition: all 0.2s ease;
-        user-select: none;
-    }
+}
 
-    .tag-option:hover {
-        background: var(--surface1);
-    }
-    
-    .tag-option span {
-        flex: 1;
-    }
+.tag-option {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: var(--surface0);
+    border: 1px solid var(--surface1);
+    border-radius: 4px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.tag-option:hover {
+    background: var(--surface1);
+}
+
+.tag-option span {
+    flex: 1;
+}
 
 .tag-option.selected {
     background: var(--lavender);
@@ -1149,6 +1300,7 @@ p {
     line-height: 1;
     opacity: 0.6;
 }
+
 .delete-tag:hover {
     opacity: 1;
 }
