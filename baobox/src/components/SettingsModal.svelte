@@ -2,9 +2,13 @@
     import { currentTheme, themes } from '$lib/themes';
     import { uiPreferences } from '$lib/stores/uiPreferences';
     import { fade } from 'svelte/transition';
+    import LogoSvg from 'D:/Projects/assets/LogoSvg.svg?url';
 
     export let isOpen = false;
-    let activeTab: 'themes' | 'interface' = 'themes';
+    let activeTab: 'themes' | 'interface' | 'about' = 'themes';
+    let isHovering = false;
+    let isSpinning = false;
+    let clickCount = 0;
 
     const fonts = [
         { name: 'Inter', value: 'Inter, system-ui, sans-serif' },
@@ -34,6 +38,15 @@
     function setTab(tab: typeof activeTab) {
         activeTab = tab;
     }
+
+    function handleLogoClick() {
+        if (isSpinning) return;
+        isSpinning = true;
+        clickCount = (clickCount + 1) % 3;
+        setTimeout(() => {
+            isSpinning = false;
+        }, 600);
+    }
 </script>
 
 {#if isOpen}
@@ -54,7 +67,9 @@
                 class:active={activeTab === 'themes'}
                 on:click={() => setTab('themes')}
             >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128Zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.42 3.42a15.995 15.995 0 0 0 4.764-4.648l3.876-5.814a1.151 1.151 0 0 0-1.597-1.597L14.146 6.32a15.996 15.996 0 0 0-4.649 4.763m3.42 3.42a6.776 6.776 0 0 0-3.42-3.42" />
+                </svg>
                 Themes
             </button>
             <button 
@@ -64,6 +79,18 @@
             >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
                 Interface
+            </button>
+            <button 
+                class="tab-button" 
+                class:active={activeTab === 'about'}
+                on:click={() => setTab('about')}
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 16v-4"/>
+                    <path d="M12 8h.01"/>
+                </svg>
+                About
             </button>
         </div>
 
@@ -92,7 +119,7 @@
                     </div>
                 </div>
             </div>
-        {:else}
+        {:else if activeTab === 'interface'}
             <div class="tab-content" in:fade={{ duration: 150 }}>
                 <div class="settings-section">
                     <h3>Interface Options</h3>
@@ -146,6 +173,26 @@
                             </button>
                         </label>
                     </div>
+                </div>
+            </div>
+        {:else}
+            <div class="tab-content" in:fade={{ duration: 150 }}>
+                <div class="settings-section about-section">
+                    <div class="logo-wrapper">
+                        <div 
+                            class="logo-container" 
+                            class:spin={isSpinning}
+                            class:hover={isHovering}
+                            on:mouseenter={() => isHovering = true}
+                            on:mouseleave={() => isHovering = false}
+                            on:click={handleLogoClick}
+                        >
+                            <img src={LogoSvg} alt="BaoBox Logo" class="app-logo" />
+                        </div>
+                    </div>
+                    <h1 class="app-name">BaoBox</h1>
+                    <p class="version">Version 0.1.0</p>
+                    <p class="creator">Created by <a href="https://github.com/twigform" target="_blank" rel="noopener noreferrer">twigform</a></p>
                 </div>
             </div>
         {/if}
@@ -450,6 +497,118 @@
     .toggle-button:focus {
         outline: none;
         box-shadow: 0 0 0 2px var(--blue);
+    }
+
+    .about-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 2rem 0;
+    }
+
+    .logo-wrapper {
+        width: 120px;
+        height: 120px;
+        margin-bottom: 1.5rem;
+        position: relative;
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .logo-wrapper::after {
+        content: '';
+        position: absolute;
+        inset: 10%;
+        border-radius: 50%;
+        background: var(--surface0);
+        opacity: 0;
+        filter: blur(20px);
+        transform: translateY(10px);
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .logo-container {
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        transform-style: preserve-3d;
+        will-change: transform;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        position: relative;
+        z-index: 1;
+    }
+
+    .logo-container.hover {
+        transform: translateY(-10px) scale(1.05);
+    }
+
+    .logo-container.spin {
+        animation: popBounce 0.6s cubic-bezier(0.16, 1, 0.3, 1.3);
+        transform-origin: center;
+    }
+
+    @keyframes popBounce {
+        0% { 
+            transform: translateY(0) scale(1); 
+        }
+        40% { 
+            transform: translateY(5px) scale(0.7); 
+        }
+        80% { 
+            transform: translateY(-15px) scale(1.15); 
+        }
+        100% { 
+            transform: translateY(var(--bounce-end-y)) scale(var(--bounce-end-scale)); 
+        }
+    }
+
+    .logo-container:not(.hover) {
+        --bounce-end-y: 0;
+        --bounce-end-scale: 1;
+    }
+
+    .logo-container.hover {
+        --bounce-end-y: -10px;
+        --bounce-end-scale: 1.05;
+    }
+
+    .app-logo {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        transform: translateZ(20px);
+        transition: transform 0.3s ease;
+    }
+
+    .app-name {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+        background: var(--text);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .version {
+        color: var(--subtext);
+        margin: 0.5rem 0;
+        font-size: 0.9rem;
+    }
+
+    .creator {
+        margin: 0.5rem 0;
+    }
+
+    .creator a {
+        color: var(--blue);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .creator a:hover {
+        opacity: 0.8;
+        text-decoration: underline;
     }
 
     @keyframes fadeIn {
