@@ -13,7 +13,8 @@ const initialColumns: Column[] = savedColumns ? JSON.parse(savedColumns) : [
                 id: '1',
                 title: 'Create Kanban Board',
                 description: 'Implement a Kanban board with drag and drop',
-                status: 'todo'
+                status: 'todo',
+                tags: []
             }
         ]
     },
@@ -31,11 +32,20 @@ const initialColumns: Column[] = savedColumns ? JSON.parse(savedColumns) : [
     }
 ];
 
-export const columns = writable<Column[]>(initialColumns);
+// Load tags from localStorage if available
+const savedTags = localStorage.getItem('kanbanTags');
+const initialTags = savedTags ? JSON.parse(savedTags) : [];
 
-// Save tasks to localStorage whenever they change
+export const columns = writable<Column[]>(initialColumns);
+export const tags = writable<string[]>(initialTags);
+
+// Save tasks and tags to localStorage whenever they change
 columns.subscribe((value) => {
     localStorage.setItem('kanbanColumns', JSON.stringify(value));
+});
+
+tags.subscribe((value) => {
+    localStorage.setItem('kanbanTags', JSON.stringify(value));
 });
 
 // Dragging state
@@ -51,12 +61,13 @@ function generateId(): string {
     return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
 
-export function addTask(columnStatus: 'todo' | 'inProgress' | 'done', title: string, description: string) {
+export function addTask(columnStatus: 'todo' | 'inProgress' | 'done', title: string, description: string, tags: string[] = []) {
     const newTask: Task = {
         id: generateId(),
         title,
         description,
-        status: columnStatus
+        status: columnStatus,
+        tags: [...tags]
     };
 
     columns.update(cols => {
@@ -103,7 +114,7 @@ export function moveTask(taskId: string, fromStatus: 'todo' | 'inProgress' | 'do
     });
 }
 
-export function editTask(taskId: string, status: string, newTitle: string, newDescription: string) {
+export function editTask(taskId: string, status: string, newTitle: string, newDescription: string, newTags: string[] = []) {
     columns.update(cols => {
         const column = cols.find(col => col.status === status);
         if (column) {
@@ -112,8 +123,60 @@ export function editTask(taskId: string, status: string, newTitle: string, newDe
                 column.tasks[idx] = {
                     ...column.tasks[idx],
                     title: newTitle,
-                    description: newDescription
+                    description: newDescription,
+                    tags: newTags
                 };
+            }
+        }
+        return cols;
+    });
+}
+
+// Tag management functions
+export function addTag(tag: string) {
+    tags.update(currentTags => {
+        if (!currentTags.includes(tag)) {
+            return [...currentTags, tag];
+        }
+        return currentTags;
+    });
+}
+
+export function deleteTag(tag: string) {
+    tags.update(currentTags => currentTags.filter(t => t !== tag));
+    
+    // Remove the tag from all tasks
+    columns.update(cols => {
+        return cols.map(col => ({
+            ...col,
+            tasks: col.tasks.map(task => ({
+                ...task,
+                tags: task.tags.filter(t => t !== tag)
+            }))
+        }));
+    });
+}
+
+export function addTagToTask(taskId: string, status: string, tag: string) {
+    columns.update(cols => {
+        const column = cols.find(col => col.status === status);
+        if (column) {
+            const task = column.tasks.find(t => t.id === taskId);
+            if (task && !task.tags.includes(tag)) {
+                task.tags = [...task.tags, tag];
+            }
+        }
+        return cols;
+    });
+}
+
+export function removeTagFromTask(taskId: string, status: string, tag: string) {
+    columns.update(cols => {
+        const column = cols.find(col => col.status === status);
+        if (column) {
+            const task = column.tasks.find(t => t.id === taskId);
+            if (task) {
+                task.tags = task.tags.filter(t => t !== tag);
             }
         }
         return cols;

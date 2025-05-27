@@ -1,7 +1,7 @@
 <!-- filepath: src/components/KanbanColumn.svelte -->
 <script lang="ts">
     import type { Column, Task } from '$lib/types';
-    import { moveTask, draggedTask, dragOverColumn, addTask, deleteTask, editTask } from '$lib/stores';
+    import { moveTask, draggedTask, dragOverColumn, addTask, deleteTask, editTask, tags, addTag, deleteTag, addTagToTask, removeTagFromTask } from '$lib/stores';
     import { uiPreferences } from '$lib/stores/uiPreferences';
     import { onMount, onDestroy } from 'svelte';
     import { get } from 'svelte/store';
@@ -17,7 +17,6 @@
     let deletingTasks = new Set<number>();
     let titleInput: HTMLInputElement | null = null;
     let descInput: HTMLTextAreaElement | null = null;
-
     let columnElement: HTMLDivElement;
     let mouseUpHandler: (e: MouseEvent) => void;
     let mouseMoveHandler: (e: MouseEvent) => void;
@@ -26,47 +25,53 @@
     let newTaskTitle = '';
     let newTaskDescription = '';
     let editingTaskId: string | null = null;
-
-    onMount(() => {
-        const handleKeydown = (e: KeyboardEvent) => {
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 't' && column.status === 'todo') {
-                e.preventDefault();
-                showAddTask = true;
-
-                setTimeout(() => {
-                    titleInput?.focus();
-                }, 0);
-            }
-        };
-
-        window.addEventListener('keydown', handleKeydown);
-        return () => {
-            window.removeEventListener('keydown', handleKeydown);
-        };
-    });
-
-    
-
+    let newTag = '';
+    let selectedTaskTags: string[] = [];
+    let showTagInput = false;
     let showContextMenu = false;
     let contextMenuX = 0;
     let contextMenuY = 0;
     let selectedTask: Task | null = null;
 
+    $: availableTags = $tags;
+
     function resetForm() {
         newTaskTitle = '';
         newTaskDescription = '';
+        selectedTaskTags = [];
         showAddTask = false;
         editingTaskId = null;
+        showTagInput = false;
+    }
+
+    function handleAddTag() {
+        if (newTag.trim()) {
+            const trimmedTag = newTag.trim();
+            addTag(trimmedTag);
+            selectedTaskTags = [...selectedTaskTags, trimmedTag];
+            newTag = '';
+        }
+    }
+
+    function handleTagSelection(tag: string) {
+        if (selectedTaskTags.includes(tag)) {
+            selectedTaskTags = selectedTaskTags.filter(t => t !== tag);
+        } else {
+            selectedTaskTags = [...selectedTaskTags, tag];
+        }
     }
 
     function handleAddTask() {
         if (newTaskTitle.trim()) {
+            const trimmedTitle = newTaskTitle.trim();
+            const trimmedDescription = newTaskDescription.trim();
+            
             if (editingTaskId !== null) {
                 // Edit mode: update the task in the store
-                editTask(editingTaskId, column.status, newTaskTitle.trim(), newTaskDescription.trim());
+                editTask(editingTaskId, column.status, trimmedTitle, trimmedDescription, [...selectedTaskTags]);
             } else {
                 // Add mode
-                addTask(column.status, newTaskTitle.trim(), newTaskDescription.trim());
+                addTask(column.status, trimmedTitle, trimmedDescription, [...selectedTaskTags]);
             }
             resetForm();
         }
@@ -99,6 +104,11 @@
         ghostElement.innerHTML = `
             <h3>${task.title}</h3>
             <p>${task.description}</p>
+            ${task.tags && task.tags.length > 0 ? `
+                <div class="task-tags">
+                    ${task.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                </div>
+            ` : ''}
         `;
         document.body.appendChild(ghostElement);
 
@@ -305,6 +315,7 @@
         if (selectedTask) {
             newTaskTitle = selectedTask.title;
             newTaskDescription = selectedTask.description || '';
+            selectedTaskTags = [...(selectedTask.tags || [])];
             editingTaskId = selectedTask.id;
             showAddTask = true;
             showContextMenu = false;
@@ -350,8 +361,8 @@
                 bind:this={titleInput}
                 on:keydown={(e) => {
                     if (e.key === "Enter") {
-                    e.preventDefault();
-                    descInput?.focus();
+                        e.preventDefault();
+                        descInput?.focus();
                     }
                 }}
             />
@@ -363,12 +374,82 @@
                 on:keydown={(e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
-                        handleAddTask(); // submit
+                        handleAddTask();
                     } else if (e.key === 'Escape') {
                         resetForm();
                     }
                 }}
             ></textarea>
+            
+            <!-- Tags Section -->
+            <div class="tags-section">
+                <div class="selected-tags">
+                    {#each selectedTaskTags as tag}
+                        <span class="tag">
+                            {tag}
+                            <button 
+                                class="remove-tag" 
+                                on:click={() => {
+                                    if (editingTaskId) {
+                                        removeTagFromTask(editingTaskId, column.status, tag);
+                                    }
+                                    selectedTaskTags = selectedTaskTags.filter(t => t !== tag);
+                                }}
+                            >
+                                &times;
+                            </button>
+                        </span>
+                    {/each}
+                </div>
+                
+                <div class="tag-input">
+                    <div class="new-tag">
+                        <input
+                            type="text"
+                            placeholder="New tag"
+                            bind:value={newTag}
+                            on:keydown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAddTag();
+                                }
+                            }}
+                        />
+                        <button on:click={handleAddTag}>+</button>
+                    </div>
+                    <div class="available-tags">
+                        {#each availableTags as tag}
+                            <div 
+                                class="tag-option"
+                                class:selected={selectedTaskTags.includes(tag)}
+                                on:click={() => {
+                                    if (selectedTaskTags.includes(tag)) {
+                                        if (editingTaskId) {
+                                            removeTagFromTask(editingTaskId, column.status, tag);
+                                        }
+                                        selectedTaskTags = selectedTaskTags.filter(t => t !== tag);
+                                    } else {
+                                        if (editingTaskId) {
+                                            addTagToTask(editingTaskId, column.status, tag);
+                                        }
+                                        selectedTaskTags = [...selectedTaskTags, tag];
+                                    }
+                                }}
+                            >
+                                <span>{tag}</span>
+                                <button 
+                                    class="delete-tag"
+                                    on:click|stopPropagation={() => deleteTag(tag)}
+                                    title="Delete tag"
+                                >
+                                    &times;
+                                </button>
+                            </div>
+                        {/each}
+                    </div>
+                </div>
+            </div>
+
             <div class="form-actions">
                 <button class="cancel" on:click={resetForm}>Cancel</button>
                 <button class="add" on:click={handleAddTask}>{editingTaskId !== null ? 'Save Changes' : 'Add Task'}</button>
@@ -392,6 +473,13 @@
                 <h3>{task.title}</h3>
                 {#if task.description}
                     <p>{task.description}</p>
+                {/if}
+                {#if task.tags && task.tags.length > 0}
+                    <div class="task-tags">
+                        {#each task.tags as tag}
+                            <span class="tag">{tag}</span>
+                        {/each}
+                    </div>
                 {/if}
                 <button
                     class="done-button"
@@ -429,16 +517,22 @@
         class="context-menu-item edit" 
         on:click={handleEditTask}
     >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
-        Edit Task
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+        </svg>
+        Edit
     </button>
     <button 
         type="button"
         class="context-menu-item delete" 
         on:click={handleDeleteTask}
     >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-        Delete Task
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18"></path>
+            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+        </svg>
+        Delete
     </button>
 </ContextMenu>
 
@@ -790,15 +884,34 @@ p {
 :global(.task-ghost h3) {
     margin: 0 0 8px 0;
     font-size: 1rem;
-    cursor: grabbing;
     color: var(--text);
+    font-family: inherit;
 }
 
 :global(.task-ghost p) {
     margin: 0;
-    cursor: grabbing;
     font-size: 0.9rem;
-    color: var(--subtext);
+    color: var(--overlay);
+    font-family: inherit;
+}
+
+:global(.task-ghost .task-tags) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+:global(.task-ghost .tag) {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: var(--surface0);
+    border: 1px solid var(--surface1);
+    border-radius: 12px;
+    font-size: 0.8rem;
+    color: var(--text);
 }
 
 .context-menu-item {
@@ -888,5 +1001,142 @@ p {
     margin: 8px 0;
     pointer-events: none;
     will-change: transform;
+}
+
+.tags-section {
+    margin-bottom: 12px;
+    background: var(--surface0);
+    border-radius: 8px;
+    padding: 12px;
+    border: 2px solid var(--surface1);
+}
+
+.selected-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.new-tag {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.new-tag input {
+    flex: 1;
+    padding: 8px;
+    border: 2px solid var(--surface1);
+    border-radius: 6px;
+    background: var(--base);
+    color: var(--text);
+}
+
+.new-tag button {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    background: var(--surface0);
+    color: var(--text);
+    border: 2px solid var(--surface2);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.new-tag button:hover {
+    transform: translateY(-1px);
+    border-color: var(--lavender);
+    background: var(--surface1);
+}
+
+.new-tag button:active {
+    transform: translateY(0);
+}
+
+.available-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}    .tag-option {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 8px;
+        background: var(--surface0);
+        border: 1px solid var(--surface1);
+        border-radius: 4px;
+        color: var(--text);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        user-select: none;
+    }
+
+    .tag-option:hover {
+        background: var(--surface1);
+    }
+    
+    .tag-option span {
+        flex: 1;
+    }
+
+.tag-option.selected {
+    background: var(--lavender);
+    color: var(--base);
+    border-color: var(--lavender);
+}
+
+.delete-tag {
+    padding: 0 4px;
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    opacity: 0.6;
+}
+.delete-tag:hover {
+    opacity: 1;
+}
+
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: var(--surface0);
+    border: 1px solid var(--surface1);
+    border-radius: 12px;
+    font-size: 0.8rem;
+    color: var(--text);
+}
+
+.remove-tag {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    font-size: 1.1rem;
+    line-height: 1;
+    opacity: 0.6;
+}
+
+.remove-tag:hover {
+    opacity: 1;
+}
+
+.task-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
 }
 </style>
