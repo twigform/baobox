@@ -5,7 +5,7 @@
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![project_license][license-shield]][license-url]
-
+<img src="https://img.shields.io/github/downloads/twigform/baobox/total?style=for-the-badge&color=f9b3a9"/>
 
 <!-- PROJECT LOGO -->
 <br />
@@ -56,9 +56,9 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-Put stuff here
-<br>
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+BaoBox is a simple app made to make managing daily tasks easier by using a clean, customizable kanban board system. Built with Tauri and Svelte, it’s designed to be lightweight and fast, with minimal resource usage.
+<br><br>
+![preview](https://github.com/user-attachments/assets/181226c0-37ff-4e96-9b74-68f5bbf26ad7)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -78,18 +78,28 @@ Put stuff here
 <!-- GETTING STARTED -->
 ## Getting Started
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+To get started easily, you can simply download the [most recent release](https://github.com/twigform/baobox/releases).
+If you'd like to build manually, there are instructions below:
 
 ### Installation
 
-1. Download the [most recent release](https://github.com/twigform/baobox/releases).
-2. Tell me to add build from source instructions later...
+1. First, you'll need to install node.js, rust, and tauri.
+2. Next, clone the git repo
    
    ```sh
    git clone https://github.com/twigform/baobox.git
    ```
+3. After that, cd into the folder and run "npm install"
+   
+   ```sh
+   npm install
+   ```
 
+4. Finally, just run "npm run tauri dev"
+   
+   ```sh
+   npm run tauri dev
+   ```
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
