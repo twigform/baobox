@@ -5,7 +5,7 @@
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![project_license][license-shield]][license-url]
-
+<img src="https://img.shields.io/github/downloads/twigform/baobox/total?style=for-the-badge&color=f9b3a9"/>
 
 <!-- PROJECT LOGO -->
 <br />
