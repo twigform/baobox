@@ -1102,13 +1102,47 @@ p {
 }
 
 :global(.task-placeholder) {
-    height: 80px;
+    min-height: 80px;
     border: 2px dashed var(--surface2);
     border-radius: var(--task-radius);
     background: var(--surface0);
     margin: 8px 0;
     pointer-events: none;
-    will-change: transform;
+    will-change: transform, opacity;
+    transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
+    box-shadow: 0 0 0 1px rgba(203, 166, 247, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+:global(.task-placeholder)::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        135deg,
+        var(--surface0) 25%,
+        var(--surface1) 25%,
+        var(--surface1) 50%,
+        var(--surface0) 50%,
+        var(--surface0) 75%,
+        var(--surface1) 75%
+    );
+    background-size: 8px 8px;
+    opacity: 0.4;
+    animation: moveBackground 30s linear infinite;
+}
+
+@keyframes moveBackground {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 100px 100px;
+    }
 }
 
 .tags-section {
