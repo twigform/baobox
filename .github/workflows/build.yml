@@ -10,49 +10,40 @@ on:
     branches: [ "main" ]
     paths:
       - 'baobox/**'
-
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
         platform: [windows-latest, macos-latest, ubuntu-latest]
-
     runs-on: ${{ matrix.platform }}
     defaults:
       run:
         working-directory: ./baobox
-
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
           cache-dependency-path: './baobox/package-lock.json'
-
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
-
       - name: Install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
-        working-directory: .      - name: Install frontend dependencies
+      - name: Install frontend dependencies
         run: npm install
-
       - name: Run type check
         run: npm run check
         
       - name: Build frontend
         run: npm run build
-
       - name: Build Tauri app
         run: npm run tauri build
-
       - name: Prepare artifacts for Release
         id: prepare_artifacts
         shell: pwsh
@@ -65,14 +56,12 @@ jobs:
             "src-tauri/target/release/bundle/deb/*.deb"
           }
           echo "artifact_path=$artifacts" >> $env:GITHUB_OUTPUT
-
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: baobox-${{ matrix.platform }}
           path: baobox/${{ steps.prepare_artifacts.outputs.artifact_path }}
           if-no-files-found: error
-
   create-release:
     needs: build
     runs-on: ubuntu-latest
