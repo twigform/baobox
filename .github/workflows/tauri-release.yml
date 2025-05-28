@@ -24,6 +24,10 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      # Add this step to upgrade Vite to v5 before npm install
+      - name: Upgrade vite to v5
+        run: npm install vite@^5.0.0
+
       - name: Install dependencies
         run: npm install
 
