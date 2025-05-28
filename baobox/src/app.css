@@ -1,14 +1,11 @@
-/* Global styles */
 :root {
     --font-family: 'Inter', system-ui, sans-serif;
 }
 
-/* Apply font family globally */
 html, body {
     font-family: var(--font-family);
 }
 
-/* Ensure all elements inherit the font */
 * {
     font-family: inherit;
 }

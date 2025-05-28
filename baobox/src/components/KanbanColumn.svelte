@@ -1788,6 +1788,11 @@ p {
     background: var(--surface1);
 }
 
+.timer-actions .cancel:active {
+    transform: translateY(0px);
+    background: var(--surface1);
+} 
+
 .timer-actions .set-timer {
     background: var(--blue);
     color: var(--mantle);
@@ -1797,7 +1802,6 @@ p {
 
 .timer-actions .set-timer:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(137, 180, 250, 0.3);
     filter: brightness(1.05);
 }
 
