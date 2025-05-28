@@ -2,10 +2,10 @@
   "dependencies": {
     "@catppuccin/palette": "^1.7.1",
     "@tauri-apps/plugin-store": "^2.2.0"
-  }
+  },
   "scripts": {
-  "dev": "vite",
-  "build": "vite build",
-  "tauri": "tauri"
+    "dev": "vite",
+    "build": "vite build",
+    "tauri": "tauri"
   }
 }
