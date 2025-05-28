@@ -9,6 +9,8 @@ export interface Task {
     description: string;
     status: 'todo' | 'inProgress' | 'done';
     tags: Tag[]; // Change from string[] to Tag[]
+    timeLimit?: number; // Time limit in seconds
+    startTime?: number; // Timestamp when timer was started
 }
 
 export interface Column {

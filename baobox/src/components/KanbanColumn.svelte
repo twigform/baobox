@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Column, Task, Tag } from '$lib/types';
-    import { moveTask, draggedTask, dragOverColumn, addTask, deleteTask, editTask, tags, addTag, deleteTag, addTagToTask, removeTagFromTask, updateTag } from '$lib/stores';
+    import { moveTask, draggedTask, dragOverColumn, addTask, deleteTask, editTask, tags, addTag, deleteTag, addTagToTask, removeTagFromTask, updateTag, addTimerToTask, removeTimerFromTask, resetTaskTimer } from '$lib/stores';
     import { uiPreferences } from '$lib/stores/uiPreferences';
     import { onMount, onDestroy } from 'svelte';
     import { get } from 'svelte/store';
@@ -33,6 +33,12 @@
     let contextMenuY = 0;
     let selectedTask: Task | null = null;
     let showColorPicker = false;
+    let showTimerModal = false;
+    let timerHours = 0;
+    let timerMinutes = 0;
+    let timerSeconds = 0;
+    let timers: {[taskId: string]: ReturnType<typeof setInterval>} = {};
+    let currentTime = Date.now(); // Track current time for reactive updates
 
     $: availableTags = $tags;
 
@@ -47,6 +53,29 @@
 
     onMount(() => {
         document.addEventListener('click', handleClickOutside);
+        
+        // Request notification permissions
+        if (Notification && Notification.permission !== "denied") {
+            Notification.requestPermission();
+        }
+        
+        // Initialize timers for existing tasks with time limits
+        column.tasks.forEach(task => {
+            if (task.timeLimit && task.startTime) {
+                timers[task.id] = setInterval(() => {
+                    updateRemainingTime(task.id, task.status);
+                }, 1000);
+            }
+        });
+        
+        // Setup global timer update for reactive updates of all timers
+        const globalTimer = setInterval(() => {
+            currentTime = Date.now(); // This will trigger reactivity for timer displays
+        }, 1000);
+        
+        return () => {
+            clearInterval(globalTimer);
+        };
     });
 
     onDestroy(() => {
@@ -63,6 +92,9 @@
             placeholderElement.remove();
         }
         document.removeEventListener('click', handleClickOutside);
+        
+        // Clear all timer intervals when component is destroyed
+        Object.values(timers).forEach(interval => clearInterval(interval));
     });
 
     const colorPalette = [
@@ -167,9 +199,23 @@
 
         ghostElement = document.createElement('div');
         ghostElement.className = 'task-ghost';
+        
+        // Create a formatted time string for the timer display
+        const timeDisplay = task.timeLimit && task.startTime ? formatTimeRemaining(task) : null;
+        
+        // Create ghost element content
         ghostElement.innerHTML = `
             <h3>${task.title}</h3>
-            <p>${task.description}</p>
+            ${task.description ? `<p>${task.description}</p>` : ''}
+            ${timeDisplay ? `
+                <div class="task-timer ${timeDisplay === '00:00:00' ? 'expiring' : isTimerAboutToExpire(task) ? 'warning' : ''}">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span>${timeDisplay}</span>
+                </div>
+            ` : ''}
             ${task.tags && task.tags.length > 0 ? `
                 <div class="task-tags">
                     ${task.tags.map(tag => `<span class="tag" style="${tag.color ? `background-color: ${tag.color}; color: ${getContrastColor(tag.color)}; border-color: ${tag.color}` : ''}">${tag.name}</span>`).join('')}
@@ -383,6 +429,117 @@
             }, 0);
         }
     }
+    
+    function handleAddTimer() {
+        showContextMenu = false;
+        showTimerModal = true;
+        timerHours = 0;
+        timerMinutes = 0;
+        timerSeconds = 0;
+    }
+    
+    function handleSetTimer() {
+        if (selectedTask) {
+            const totalSeconds = timerHours * 3600 + timerMinutes * 60 + timerSeconds;
+            if (totalSeconds > 0) {
+                addTimerToTask(selectedTask.id, selectedTask.status, totalSeconds);
+                showTimerModal = false;
+                
+                // Clean up any existing timer for this task
+                if (timers[selectedTask.id]) {
+                    clearInterval(timers[selectedTask.id]);
+                }
+                
+                // Update the timer display every second
+                timers[selectedTask.id] = setInterval(() => {
+                    updateRemainingTime(selectedTask.id, selectedTask.status);
+                    // Force a re-render for this task's timer by updating the reactive variable
+                    currentTime = Date.now();
+                }, 1000);
+            }
+        }
+    }
+    
+    function updateRemainingTime(taskId: string, status: string) {
+        columns.update(cols => {
+            const column = cols.find(col => col.status === status);
+            if (column) {
+                const task = column.tasks.find(t => t.id === taskId);
+                if (task && task.timeLimit && task.startTime) {
+                    const elapsedSeconds = Math.floor((Date.now() - task.startTime) / 1000);
+                    if (elapsedSeconds >= task.timeLimit) {
+                        // Timer expired
+                        clearInterval(timers[taskId]);
+                        delete timers[taskId];
+                        
+                        // Show a notification
+                        if (Notification && Notification.permission === "granted") {
+                            new Notification("BaoBox Task Timer", {
+                                body: `Time's up! Task "${task.title}" has reached its time limit.`,
+                                icon: "/favicon.png"
+                            });
+                        } else if (Notification && Notification.permission !== "denied") {
+                            Notification.requestPermission().then(permission => {
+                                if (permission === "granted") {
+                                    new Notification("BaoBox Task Timer", {
+                                        body: `Time's up! Task "${task.title}" has reached its time limit.`,
+                                        icon: "/favicon.png"
+                                    });
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+            return cols;
+        });
+    }
+    
+    function formatTimeRemaining(task: Task) {
+        if (!task.timeLimit || !task.startTime) return null;
+        
+        // Use the reactive currentTime variable
+        const elapsedSeconds = Math.floor((currentTime - task.startTime) / 1000);
+        const remainingSeconds = Math.max(0, task.timeLimit - elapsedSeconds);
+        
+        if (remainingSeconds <= 0) return '00:00:00';
+        
+        const hours = Math.floor(remainingSeconds / 3600);
+        const minutes = Math.floor((remainingSeconds % 3600) / 60);
+        const seconds = remainingSeconds % 60;
+        
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    function isTimerAboutToExpire(task: Task) {
+        if (!task.timeLimit || !task.startTime) return false;
+        
+        // Use the reactive currentTime variable
+        const elapsedSeconds = Math.floor((currentTime - task.startTime) / 1000);
+        const remainingSeconds = Math.max(0, task.timeLimit - elapsedSeconds);
+        
+        return remainingSeconds <= 60 && remainingSeconds > 0; // Less than or equal to 1 minute
+    }
+    
+    function handleRemoveTimer() {
+        if (selectedTask) {
+            removeTimerFromTask(selectedTask.id, selectedTask.status);
+            showContextMenu = false;
+            
+            // Clear the interval if one exists
+            if (timers[selectedTask.id]) {
+                clearInterval(timers[selectedTask.id]);
+                delete timers[selectedTask.id];
+            }
+        }
+    }
+    
+    function handleResetTimer() {
+        if (selectedTask) {
+            resetTaskTimer(selectedTask.id, selectedTask.status);
+            showContextMenu = false;
+        }
+    }
 
     onDestroy(() => {
         if (mouseUpHandler) {
@@ -564,6 +721,50 @@
             </div>
         </div>
     {/if}
+    
+    {#if showTimerModal}
+        <div class="timer-modal-backdrop" transition:fade={{ duration: 200 }}>
+            <div class="timer-modal" transition:scale={{ duration: 200, start: 0.8, opacity: 0 }}>
+                <h3>Set Task Timer</h3>
+                <div class="timer-inputs">
+                    <div class="timer-input-group">
+                        <label for="hours">Hours</label>
+                        <input 
+                            type="number" 
+                            id="hours" 
+                            bind:value={timerHours} 
+                            min="0" 
+                            max="23"
+                        />
+                    </div>
+                    <div class="timer-input-group">
+                        <label for="minutes">Minutes</label>
+                        <input 
+                            type="number" 
+                            id="minutes" 
+                            bind:value={timerMinutes} 
+                            min="0" 
+                            max="59"
+                        />
+                    </div>
+                    <div class="timer-input-group">
+                        <label for="seconds">Seconds</label>
+                        <input 
+                            type="number" 
+                            id="seconds" 
+                            bind:value={timerSeconds} 
+                            min="0" 
+                            max="59"
+                        />
+                    </div>
+                </div>
+                <div class="timer-actions">
+                    <button class="cancel" on:click={() => showTimerModal = false}>Cancel</button>
+                    <button class="set-timer" on:click={handleSetTimer}>Set Timer</button>
+                </div>
+            </div>
+        </div>
+    {/if}
 
     <div class="tasks">
         {#each column.tasks as task (task.id)}
@@ -581,6 +782,19 @@
                 <h3>{task.title}</h3>
                 {#if task.description}
                     <p>{task.description}</p>
+                {/if}
+                {#if task.timeLimit && task.startTime}
+                    {#key currentTime}
+                        <div class="task-timer" 
+                             class:expiring={formatTimeRemaining(task) === '00:00:00'}
+                             class:warning={isTimerAboutToExpire(task)}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            <span>{formatTimeRemaining(task)}</span>
+                        </div>
+                    {/key}
                 {/if}
                 {#if task.tags && task.tags.length > 0}
                     <div class="task-tags">
@@ -630,6 +844,43 @@
         </svg>
         Edit
     </button>
+    {#if !selectedTask?.timeLimit}
+        <button 
+            type="button"
+            class="context-menu-item timer" 
+            on:click={handleAddTimer}
+        >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            Add Timer
+        </button>
+    {:else}
+        <button 
+            type="button"
+            class="context-menu-item timer" 
+            on:click={handleResetTimer}
+        >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <polyline points="23 20 23 14 17 14"></polyline>
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+            </svg>
+            Reset Timer
+        </button>
+        <button 
+            type="button"
+            class="context-menu-item timer-remove" 
+            on:click={handleRemoveTimer}
+        >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            Remove Timer
+        </button>
+    {/if}
     <button 
         type="button"
         class="context-menu-item delete" 
@@ -1003,6 +1254,30 @@ p {
     font-family: inherit;
 }
 
+:global(.task-ghost .task-timer) {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 4px 8px;
+    background-color: var(--surface0);
+    border-radius: 16px;
+    border: 1px solid var(--surface1);
+    width: fit-content;
+    color: var(--blue);
+    font-family: monospace;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+:global(.task-ghost .task-timer.expiring) {
+    color: var(--red);
+}
+
+:global(.task-ghost .task-timer.warning) {
+    color: var(--yellow);
+}
+
 :global(.task-ghost .task-tags) {
     display: flex;
     flex-wrap: wrap;
@@ -1054,8 +1329,8 @@ p {
 }
 
 .context-menu-item.edit {
-    color: var(--accent-blue);
-    border: 2px solid var(--accent-blue);
+    color: var(--green);
+    border: 2px solid var(--green);
 }
 
 .context-menu-item.edit:hover {
@@ -1068,8 +1343,8 @@ p {
 }
 
 .context-menu-item.delete {
-    color: var(--accent-red);
-    border: 2px solid var(--accent-red);
+    color: var(--red);
+    border: 2px solid var(--red);
 }
 
 .context-menu-item.delete:hover {
@@ -1371,5 +1646,180 @@ p {
     flex-wrap: wrap;
     gap: 4px;
     margin-top: 8px;
+}
+
+/* Timer styles */
+.task-timer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 4px 8px;
+    background-color: var(--surface0);
+    border-radius: 16px;
+    border: 1px solid var(--surface1);
+    width: fit-content;
+    color: var(--blue);
+    font-family: monospace;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.task-timer.expiring {
+    color: var(--red);
+}
+
+.task-timer.warning {
+    color: var(--yellow);
+}
+
+.context-menu-item.timer {
+    color: var(--blue);
+    border: 2px solid var(--blue);
+}
+
+.context-menu-item.timer:hover {
+    background: var(--surface1);
+    transform: translateY(-1px);
+}
+
+.context-menu-item.timer-remove {
+    color: var(--yellow);
+    border: 2px solid var(--yellow);
+}
+
+.context-menu-item.timer-remove:hover {
+    background: var(--surface1);
+    transform: translateY(-1px);
+}
+
+.timer-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.timer-modal {
+    background: var(--base);
+    border-radius: 16px;
+    padding: 28px 32px;
+    width: 400px;
+    border: 2px solid var(--surface2);
+    animation: modalAppear 0.3s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+@keyframes modalAppear {
+    from { 
+        opacity: 0;
+        transform: scale(0.92) translateY(10px); 
+    }
+    to { 
+        opacity: 1;
+        transform: scale(1) translateY(0); 
+    }
+}
+
+.timer-modal h3 {
+    margin: 0 0 24px 0;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text);
+    font-size: 1.2rem;
+}
+
+.timer-inputs {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 28px;
+}
+
+.timer-input-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.timer-input-group label {
+    font-size: 0.9rem;
+    color: var(--text);
+    opacity: 0.8;
+    font-weight: 500;
+    text-align: center;
+}
+
+.timer-input-group input {
+    width: 100%;
+    padding: 10px 4px;
+    border: 2px solid var(--surface1);
+    border-radius: 10px;
+    font-size: 1rem;
+    background: var(--surface0);
+    color: var(--text);
+    text-align: center;
+    transition: all 0.2s ease;
+    font-family: var(--font-mono, monospace);
+}
+
+.timer-input-group input:focus {
+    outline: none;
+    border-color: var(--blue);
+    background: var(--base);
+    box-shadow: 0 0 0 2px rgba(137, 180, 250, 0.25);
+}
+
+.timer-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    margin-top: 10px;
+}
+
+.timer-actions button {
+    padding: 12px 20px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    flex: 1;
+}
+
+.timer-actions .cancel {
+    background: var(--surface0);
+    color: var(--text);
+    border: 2px solid var(--surface2);
+}
+
+.timer-actions .cancel:hover {
+    transform: translateY(-2px);
+    background: var(--surface1);
+}
+
+.timer-actions .set-timer {
+    background: var(--blue);
+    color: var(--mantle);
+    border: 2px solid var(--blue);
+    font-weight: 600;
+}
+
+.timer-actions .set-timer:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(137, 180, 250, 0.3);
+    filter: brightness(1.05);
+}
+
+.timer-actions .set-timer:active {
+    transform: translateY(0);
+    filter: brightness(0.95);
 }
 </style>

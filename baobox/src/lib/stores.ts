@@ -230,3 +230,45 @@ export function removeTagFromTask(taskId: string, status: string, tagName: strin
         return cols;
     });
 }
+
+// Timer management functions
+export function addTimerToTask(taskId: string, status: string, timeLimit: number) {
+    columns.update(cols => {
+        const column = cols.find(col => col.status === status);
+        if (column) {
+            const task = column.tasks.find(t => t.id === taskId);
+            if (task) {
+                task.timeLimit = timeLimit;
+                task.startTime = Date.now();
+            }
+        }
+        return cols;
+    });
+}
+
+export function removeTimerFromTask(taskId: string, status: string) {
+    columns.update(cols => {
+        const column = cols.find(col => col.status === status);
+        if (column) {
+            const task = column.tasks.find(t => t.id === taskId);
+            if (task) {
+                delete task.timeLimit;
+                delete task.startTime;
+            }
+        }
+        return cols;
+    });
+}
+
+export function resetTaskTimer(taskId: string, status: string) {
+    columns.update(cols => {
+        const column = cols.find(col => col.status === status);
+        if (column) {
+            const task = column.tasks.find(t => t.id === taskId);
+            if (task && task.timeLimit) {
+                task.startTime = Date.now();
+            }
+        }
+        return cols;
+    });
+}
