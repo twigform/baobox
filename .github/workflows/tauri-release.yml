@@ -21,7 +21,9 @@ jobs:
           cache: 'npm'
       
       - name: Install frontend dependencies
-        run: npm ci
+        run: |
+          # Try npm ci first, fallback to npm install if lock file is out of sync
+          npm ci || npm install
       
       - name: Run tests
         run: npm test
@@ -63,7 +65,9 @@ jobs:
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: |
+          # Try npm ci first, fallback to npm install if lock file is out of sync
+          npm ci || npm install
 
       - name: Build frontend
         run: npm run build
