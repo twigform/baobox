@@ -1,0 +1,79 @@
+name: Release Tauri App
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  tauri-build:
+    strategy:
+      matrix:
+        platform:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli
+
+      - name: Build Tauri App
+        run: npm run tauri build
+
+      - name: Rename and collect artifacts
+        shell: bash
+        run: |
+          mkdir -p release
+          if [[ "${{ matrix.platform }}" == "ubuntu-latest" ]]; then
+            cp src-tauri/target/release/bundle/deb/*.deb "release/$(basename *.deb | sed 's/.deb/-linux.deb/')"
+            cp src-tauri/target/release/bundle/appimage/*.AppImage "release/$(basename *.AppImage | sed 's/.AppImage/-linux.AppImage/')"
+          elif [[ "${{ matrix.platform }}" == "windows-latest" ]]; then
+            cp src-tauri/target/release/bundle/msi/*.msi "release/$(basename *.msi | sed 's/.msi/-windows.msi/')"
+          elif [[ "${{ matrix.platform }}" == "macos-latest" ]]; then
+            cp src-tauri/target/release/bundle/dmg/*.dmg "release/$(basename *.dmg | sed 's/.dmg/-mac.dmg/')"
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}-artifacts
+          path: release
+
+  release:
+    needs: tauri-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: all-artifacts/**/*.*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
