@@ -47,13 +47,13 @@ jobs:
         run: npm install
 
       - name: Run type check
-        run: npm run check
-
-      - name: Build frontend
+        run: npm run check      - name: Build frontend
         run: npm run build
 
       - name: Build Tauri app
-        run: npm run tauri build      - name: Prepare artifacts for Release
+        run: npm run tauri build
+
+      - name: Prepare artifacts for Release
         id: prepare_artifacts
         shell: pwsh
         run: |
