@@ -10,6 +10,7 @@
     import { fade, scale } from 'svelte/transition';
     import { bounceOut, cubicInOut, cubicOut, quintOut, backOut } from 'svelte/easing';
     import { slide } from 'svelte/transition';
+    import { columns } from '$lib/stores';
 
     export let column: Column;
 
@@ -63,7 +64,9 @@
         column.tasks.forEach(task => {
             if (task.timeLimit && task.startTime) {
                 timers[task.id] = setInterval(() => {
-                    updateRemainingTime(task.id, task.status);
+                    if (task) {
+                        updateRemainingTime(task.id, task.status);
+                    }
                 }, 1000);
             }
         });
@@ -452,37 +455,39 @@
                 
                 // Update the timer display every second
                 timers[selectedTask.id] = setInterval(() => {
-                    updateRemainingTime(selectedTask.id, selectedTask.status);
-                    // Force a re-render for this task's timer by updating the reactive variable
-                    currentTime = Date.now();
+                    if (selectedTask) {
+                        updateRemainingTime(selectedTask.id, selectedTask.status);
+                        currentTime = Date.now();
+                    }
                 }, 1000);
             }
         }
     }
     
+    // Fix: Use columns store in updateRemainingTime
     function updateRemainingTime(taskId: string, status: string) {
-        columns.update(cols => {
-            const column = cols.find(col => col.status === status);
+        columns.update((cols: any[]) => {
+            const column = cols.find((col: any) => col.status === status);
             if (column) {
-                const task = column.tasks.find(t => t.id === taskId);
+                const task = column.tasks.find((t: any) => t.id === taskId);
                 if (task && task.timeLimit && task.startTime) {
                     const elapsedSeconds = Math.floor((Date.now() - task.startTime) / 1000);
                     if (elapsedSeconds >= task.timeLimit) {
-                        // Timer expired
-                        clearInterval(timers[taskId]);
-                        delete timers[taskId];
-                        
+                        if (timers[taskId]) {
+                            clearInterval(timers[taskId]);
+                            delete timers[taskId];
+                        }
                         // Show a notification
                         if (Notification && Notification.permission === "granted") {
                             new Notification("BaoBox Task Timer", {
-                                body: `Time's up! Task "${task.title}" has reached its time limit.`,
+                                body: `Time's up! Task \"${task.title}\" has reached its time limit.`,
                                 icon: "/favicon.png"
                             });
                         } else if (Notification && Notification.permission !== "denied") {
                             Notification.requestPermission().then(permission => {
                                 if (permission === "granted") {
                                     new Notification("BaoBox Task Timer", {
-                                        body: `Time's up! Task "${task.title}" has reached its time limit.`,
+                                        body: `Time's up! Task \"${task.title}\" has reached its time limit.`,
                                         icon: "/favicon.png"
                                     });
                                 }
@@ -1303,8 +1308,8 @@ p {
     cursor: pointer;
     border-radius: 8px !important;
     font-size: 1rem;
+    /* Remove colored text and borders */
     color: var(--text);
-    transition: all 0.2s ease;
     background: var(--surface0);
     border: 2px solid transparent;
     width: 100%;
@@ -1328,31 +1333,27 @@ p {
     stroke-width: 2;
 }
 
-.context-menu-item.edit {
-    color: var(--green);
-    border: 2px solid var(--green);
+/* Remove colored variants */
+.context-menu-item.edit,
+.context-menu-item.delete,
+.context-menu-item.timer,
+.context-menu-item.timer-remove {
+    color: var(--text);
+    border: 2px solid transparent;
 }
 
-.context-menu-item.edit:hover {
+.context-menu-item.edit:hover,
+.context-menu-item.delete:hover,
+.context-menu-item.timer:hover,
+.context-menu-item.timer-remove:hover {
     background: var(--surface1);
     transform: translateY(-1px);
 }
 
-.context-menu-item.edit:active {
-    transform: scale(0.98);
-}
-
-.context-menu-item.delete {
-    color: var(--red);
-    border: 2px solid var(--red);
-}
-
-.context-menu-item.delete:hover {
-    background: var(--surface1);
-    transform: translateY(-1px);
-}
-
-.context-menu-item.delete:active {
+.context-menu-item.edit:active,
+.context-menu-item.delete:active,
+.context-menu-item.timer:active,
+.context-menu-item.timer-remove:active {
     transform: scale(0.98);
 }
 
@@ -1673,25 +1674,7 @@ p {
     color: var(--yellow);
 }
 
-.context-menu-item.timer {
-    color: var(--blue);
-    border: 2px solid var(--blue);
-}
 
-.context-menu-item.timer:hover {
-    background: var(--surface1);
-    transform: translateY(-1px);
-}
-
-.context-menu-item.timer-remove {
-    color: var(--yellow);
-    border: 2px solid var(--yellow);
-}
-
-.context-menu-item.timer-remove:hover {
-    background: var(--surface1);
-    transform: translateY(-1px);
-}
 
 .timer-modal-backdrop {
     position: fixed;
