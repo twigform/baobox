@@ -58,7 +58,7 @@
 
 BaoBox is a simple app made to make managing daily tasks easier by using a clean, customizable kanban board system. Built with Tauri and Svelte, it’s designed to be lightweight and fast, with minimal resource usage.
 <br><br>
-![preview](https://github.com/user-attachments/assets/181226c0-37ff-4e96-9b74-68f5bbf26ad7)
+![ezgif-78bed0f42a39f9](https://github.com/user-attachments/assets/5bebe814-2691-4776-ac71-851cb2f67ac3)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -83,19 +83,30 @@ If you'd like to build manually, there are instructions below:
 
 ### Installation
 
-1. First, you'll need to install node.js, rust, and tauri.
+1. Install Prerequisites
+
+  Make sure you have the following installed:
+  
+  - [Node.js](https://nodejs.org/)
+  - [Rust (via rustup)](https://rustup.rs/)
+  - Tauri CLI:
+  - 
+    ```sh
+    cargo install tauri-cli
+
 2. Next, clone the git repo
    
    ```sh
    git clone https://github.com/twigform/baobox.git
+   cd baobox (or wherever you have the folder)
    ```
-3. After that, cd into the folder and run "npm install"
+3. After that, install the node dependencies "npm install"
    
    ```sh
    npm install
    ```
 
-4. Finally, just run "npm run tauri dev"
+4. Finally, just run "npm run tauri dev" to start the development server
    
    ```sh
    npm run tauri dev
@@ -103,20 +114,11 @@ If you'd like to build manually, there are instructions below:
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
-
-<!-- USAGE EXAMPLES -->
-## Usage
-
-Add screenshots/examples later.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
 <!-- ROADMAP -->
 ## Roadmap
 
-- [ ] First release
+- [x] First release
+- [ ] Linux/mac builds
 
 See the [open issues](https://github.com/twigform/baobox/issues) for a full list of proposed features (and known issues).
 
