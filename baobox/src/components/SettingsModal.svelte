@@ -2,7 +2,7 @@
     import { currentTheme, themes } from '$lib/themes';
     import { uiPreferences } from '$lib/stores/uiPreferences';
     import { fade } from 'svelte/transition';
-    import LogoSvg from 'D:/Projects/assets/LogoSvg.svg?url';
+    import LogoSvg from '$lib/assets/LogoSvg.svg?url';
 
     export let isOpen = false;
     let activeTab: 'themes' | 'interface' | 'about' = 'themes';
