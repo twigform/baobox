@@ -5,6 +5,7 @@ interface UIPreferences {
     showBorders: boolean;
     showRoundedCorners: boolean;
     fontFamily: string;
+    customFonts: string[]; // Add customFonts array
 }
 
 const defaultFonts = [
@@ -21,14 +22,18 @@ function createUIPreferencesStore() {
         if (typeof localStorage !== 'undefined') {
             const saved = localStorage.getItem('baobox-ui-preferences');
             if (saved) {
-                return JSON.parse(saved);
+                const parsed = JSON.parse(saved);
+                // Ensure customFonts exists
+                if (!parsed.customFonts) parsed.customFonts = [];
+                return parsed;
             }
         }
         return {
             showShadows: true,
             showBorders: true,
             showRoundedCorners: true,
-            fontFamily: defaultFonts[0].value // Default to Inter
+            fontFamily: defaultFonts[0].value, // Default to Inter
+            customFonts: []
         };
     };
 
@@ -54,12 +59,46 @@ function createUIPreferencesStore() {
                 return newPrefs;
             });
         },
+        addCustomFont: (fontName: string) => {
+            update(prefs => {
+                if (!fontName.trim()) return prefs;
+                if (prefs.customFonts.includes(fontName.trim())) return prefs;
+                const newPrefs = { 
+                    ...prefs, 
+                    customFonts: [...prefs.customFonts, fontName.trim()] 
+                };
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.setItem('baobox-ui-preferences', JSON.stringify(newPrefs));
+                }
+                return newPrefs;
+            });
+        },
+        removeCustomFont: (fontName: string) => {
+            update(prefs => {
+                const newFonts = prefs.customFonts.filter(f => f !== fontName);
+                // If the current font is being removed, reset to default
+                let newFontFamily = prefs.fontFamily;
+                if (prefs.fontFamily === fontName) {
+                    newFontFamily = defaultFonts[0].value;
+                }
+                const newPrefs = { 
+                    ...prefs, 
+                    customFonts: newFonts,
+                    fontFamily: newFontFamily
+                };
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.setItem('baobox-ui-preferences', JSON.stringify(newPrefs));
+                }
+                return newPrefs;
+            });
+        },
         reset: () => {
             const defaults = {
                 showShadows: true,
                 showBorders: true,
                 showRoundedCorners: true,
-                fontFamily: defaultFonts[0].value
+                fontFamily: defaultFonts[0].value,
+                customFonts: []
             };
             if (typeof localStorage !== 'undefined') {
                 localStorage.setItem('baobox-ui-preferences', JSON.stringify(defaults));

@@ -18,6 +18,21 @@
         { name: 'System UI', value: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' }
     ];
 
+    // --- Custom font logic ---
+    let customFontInput = '';
+    $: customFonts = $uiPreferences.customFonts || [];
+
+    function addCustomFont() {
+        if (customFontInput.trim()) {
+            uiPreferences.addCustomFont(customFontInput.trim());
+            customFontInput = '';
+        }
+    }
+    function removeCustomFont(font: string) {
+        uiPreferences.removeCustomFont(font);
+    }
+    // ---
+
     function handleThemeChange(theme: { name: string; theme: any }) {
         currentTheme.setTheme(theme);
     }
@@ -134,9 +149,37 @@
                                 {#each fonts as font}
                                     <option value={font.value}>{font.name}</option>
                                 {/each}
+                                {#each customFonts as font}
+                                    <option value={font}>{font}</option>
+                                {/each}
                             </select>
                         </div>
-
+                        <!-- Custom font input UI -->
+                        <div class="custom-fonts">
+                            <label for="custom-font-input">Add Custom Font</label>
+                            <div class="custom-font-row">
+                                <input
+                                    id="custom-font-input"
+                                    type="text"
+                                    placeholder="Font name (e.g. Comic Sans MS)"
+                                    bind:value={customFontInput}
+                                    on:keydown={(e) => { if (e.key === 'Enter') addCustomFont(); }}
+                                />
+                                <button class="add-custom-font-btn" on:click={addCustomFont} title="Add custom font">
+                                    +
+                                </button>
+                            </div>
+                            {#if customFonts.length > 0}
+                                <div class="custom-font-list">
+                                    {#each customFonts as font}
+                                        <div class="custom-font-item">
+                                            <span>{font}</span>
+                                            <button class="remove-custom-font-btn" on:click={() => removeCustomFont(font)} title="Remove font">&times;</button>
+                                        </div>
+                                    {/each}
+                                </div>
+                            {/if}
+                        </div>
                         <label class="toggle-wrapper">
                             <span>Show Shadows</span>
                             <button
@@ -690,5 +733,86 @@
             opacity: 1;
             transform: translateY(0) scale(1);
         }
+    }
+
+    .custom-fonts {
+        margin-top: 12px;
+        margin-bottom: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .custom-font-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .custom-font-row input[type="text"] {
+        flex: 1;
+        padding: 8px;
+        border: 2px solid var(--surface1);
+        border-radius: 6px;
+        background: var(--base);
+        color: var(--text);
+        font-size: 0.95rem;
+    }
+
+    .add-custom-font-btn {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        background: var(--surface0);
+        color: var(--text);
+        border: 2px solid var(--surface2);
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1.2rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .add-custom-font-btn:hover {
+        border-color: var(--lavender);
+        background: var(--surface1);
+        transform: translateY(-1px);
+    }
+
+    .custom-font-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 4px;
+    }
+
+    .custom-font-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: var(--surface1);
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 0.95rem;
+        color: var(--text);
+    }
+
+    .remove-custom-font-btn {
+        background: none;
+        border: none;
+        color: var(--red);
+        font-size: 1.1rem;
+        cursor: pointer;
+        margin-left: 4px;
+        padding: 0 4px;
+        border-radius: 4px;
+        transition: background 0.2s;
+    }
+
+    .remove-custom-font-btn:hover {
+        background: var(--surface2);
     }
 </style>
